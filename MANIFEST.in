@@ -1,0 +1,12 @@
+# add to distribution
+include LICENSE.txt
+include README.MD
+include requirements.txt
+include environment.yml
+include spec-file.txt
+include spec-file.txt
+include install/*
+
+# Include the data files
+#recursive-include data *
+#graft data
