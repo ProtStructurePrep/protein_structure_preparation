@@ -160,9 +160,10 @@ XYP
 ZN
 '''.split()
 
-def get_ligands(top):
+def get_ligands(pdb):
     ligands = []
 
+    top = pdb.top
     idx = top.select("not protein and not water")
     subset = pdb.atom_slice(idx)
     topology_ligands = subset.top
