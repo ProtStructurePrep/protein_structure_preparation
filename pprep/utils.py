@@ -173,5 +173,3 @@ def get_ligands(top):
             ligands.append(res.name)
 
     return(ligands)
-
-ligands = get_ligands(topology.residues)
