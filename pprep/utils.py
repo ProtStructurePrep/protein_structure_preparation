@@ -174,3 +174,17 @@ def get_ligands(pdb):
             ligands.append(res.name)
 
     return(ligands)
+
+def common_ligands(data, n=100):
+    excluded_ligands = []
+    threshold = n # check threshold
+
+    for line in data:
+        line = line.split()
+        ligand = line[0]
+        n_prot = len(line[1:])
+        # print(ligand, n_prot)
+        if n_prot > threshold:
+            excluded_ligands.append(ligand)
+
+    return(excluded_ligands)
