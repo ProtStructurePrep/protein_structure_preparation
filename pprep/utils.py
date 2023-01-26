@@ -162,6 +162,20 @@ XYP
 ZN
 '''.split()
 
+def common_ligands(data, n=100):
+    excluded_ligands = []
+    threshold = n # check threshold
+
+    for line in data:
+        line = line.split()
+        ligand = line[0]
+        n_prot = len(line[1:])
+        # print(ligand, n_prot)
+        if n_prot > threshold:
+            excluded_ligands.append(ligand)
+
+    return(excluded_ligands)
+
 def load_pdb(pdb_name):
     link = 'http://www.rcsb.org/pdb/files/' + pdb_name + '.pdb'
     pdb = md.load_pdb(link)
@@ -182,16 +196,3 @@ def get_ligands(pdb):
 
     return(ligands)
 
-def common_ligands(data, n=100):
-    excluded_ligands = []
-    threshold = n # check threshold
-
-    for line in data:
-        line = line.split()
-        ligand = line[0]
-        n_prot = len(line[1:])
-        # print(ligand, n_prot)
-        if n_prot > threshold:
-            excluded_ligands.append(ligand)
-
-    return(excluded_ligands)
