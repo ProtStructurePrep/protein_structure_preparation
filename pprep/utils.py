@@ -1,3 +1,5 @@
+import mdtraj as md
+
 COMMON_LIGANDS = '''
 1PE
 3DR
@@ -159,6 +161,11 @@ XE
 XYP
 ZN
 '''.split()
+
+def load_pdb(pdb_name):
+    link = 'http://www.rcsb.org/pdb/files/' + pdb_name + '.pdb'
+    pdb = md.load_pdb(link)
+    return(pdb)
 
 def get_ligands(pdb):
     ligands = []
