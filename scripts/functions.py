@@ -1,8 +1,10 @@
-import mdtraj as md
-
-pdb = md.load_pdb('http://www.rcsb.org/pdb/files/1J4R.pdb')
-
 from pprep import utils
+
+'''
+load a pdb
+'''
+
+pdb = utils.load_pdb('1J4R')
 
 '''
 create the 'common_ligands' list
@@ -17,4 +19,5 @@ len(utils.common_ligands(data))
 get the ligands of the protein (ignoring the ligands found in the 'common_ligands' list)
 '''
 
-utils.get_ligands(pdb)
+ligands = utils.get_ligands(pdb)
+print(ligands)
