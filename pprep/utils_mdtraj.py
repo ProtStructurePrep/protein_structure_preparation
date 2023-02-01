@@ -1,4 +1,6 @@
 import mdtraj as md
+import numpy as np
+import itertools 
 
 COMMON_LIGANDS = '''
 1PE
@@ -196,3 +198,151 @@ def get_ligands(pdb):
 
     return(ligands)
 
+def select_chain(pdb, n, selection=None):
+    """select atomic ids for chain with index `n`"""
+    idx = pdb.top.select(f'(chainid {n}) and {selection}')
+    if len(idx) == 0:
+        raise ValueError('Empty chain')
+    return idx
+
+def select_protein_chains(pdb):
+    """Return the atomic indices of each protein chain"""
+    n_chains = len(list(pdb.top.chains))
+    protein_chains = []
+    for n in range(n_chains):
+        try:
+            chain = select_chain(pdb, n, selection='protein')
+        except ValueError:
+            pass
+        else:
+            protein_chains.append(chain)
+    return protein_chains
+
+def select_ligands(pdb):
+    """Return the atomic indices of each ligand"""
+    n_chains = len(list(pdb.top.chains))
+    ligands = []
+    for n in range(n_chains):
+        try:
+            chain = select_chain(pdb, n, selection='not protein and not water')
+        except ValueError:
+            pass
+        else:
+            ligands.append(chain)
+    return ligands
+
+def select_common_ligands(pdb,ligands):
+    """Return the atomic indices of the common ligands"""
+    atoms_common_ligands = []
+    for i in range(len(ligands)):
+        lig = pdb.atom_slice(ligands[i])
+        for res in lig.top.residues:
+            if res.name in COMMON_LIGANDS:
+                idx = pdb.top.select(f"resname {res.name}")
+                atoms_common_ligands.append(idx)
+
+    return(atoms_common_ligands)
+
+def select_definitive_ligands(ligands,common_ligands):
+    """
+
+    Parameters
+    ----------
+    ligands: list of arrays
+        it contains the atomic indices of the ligands of interest
+
+    Returns
+    ----------
+    List of arrays, each of them containing the atomic indices of the ligands of interest
+
+    """
+    definitive_ligands = []
+    for i in range(len(ligands)):
+        definitive_ligands.append(np.setdiff1d(ligands[i],common_ligands[i]))
+
+    return(definitive_ligands)
+
+def compute_distance_chain_ligand(pdb,protein_chains, ligands):
+    """
+
+    Parameters
+    ----------
+    pdb: mdtraj object
+        it is the object that load_pdb() returns
+    protein_chains: list of arrays
+        it contains the atomic indices of the protein chains
+    ligands: list of arrays
+        it contains the atomic indices of the ligands of interest
+
+    Returns
+    ----------
+    List of arrays, each of them containing the distances between each ligand and each protein chain
+    The order of the array is as follows: (ligand_1-chain_1), (ligand_1-chain_2), (ligand_1-chain_3) ... ,
+    (ligand_2-chain_1), (ligand_2-chain_2), (ligand_2-chain_3) ...
+
+    """
+    distances = {}
+    for nlig in range(len(ligands)):
+        l = []
+        for nchain in range(len(protein_chains)):
+            pairs = list(itertools.product(protein_chains[nchain], ligands[nlig]))
+            d = md.compute_distances(pdb, pairs)
+            l.append(d)
+        distances[nlig] = l
+    return distances
+
+def associate_ligand_to_chain(dist):
+    """
+
+    Parameters
+    ----------
+    dist: dictionary of lists containing numpy.ndarray
+        the key is the index of the ligand and the value is a list containing all the distance numpy.ndarray
+
+    Returns
+    ----------
+    A dictionary with the ligand index as key and the most closest chain as value
+
+    """
+
+    d = {}
+    for i in range(len(dist)): # for each ligand
+        l = []
+        for j in range(len(dist[i])): # for each array of distances
+            min1 = np.amin(dist[i][j])
+            l.append(min1)
+
+        min_dist = min(l)
+        closest_chain = l.index(min_dist)
+        d[i] = closest_chain
+
+    return d
+
+def save_chain_ligand_pdb(pdb,ligands,protein_chains, ligand_chain):
+    """
+    
+    Parameters
+    ----------
+    pdb: mdtraj object
+        it is the object that load_pdb() returns
+    protein_chains: list of arrays
+        it contains the atomic indices of the protein chains
+    ligands: list of arrays
+        it contains the atomic indices of the ligands of interest
+    ligand_chain: dictionary
+        it contains the ligand index as key and the protein chain index as value
+        
+    Returns
+    ----------
+    It saves the protein chain and the ligand into two separated pdb files. It returns 'Well saved!' if 
+    everything went okey.
+    
+    """   
+    for i in range(len(ligands)):
+        lig = pdb.atom_slice(ligands[i])
+        chain = pdb.atom_slice(protein_chains[ligand_chain[i]])
+
+        lig.save_pdb(f"ligand_{i}.pdb")
+        chain.save_pdb(f"chain_{i}.pdb")
+        
+    return("Well saved!")
