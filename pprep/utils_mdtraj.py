@@ -192,7 +192,7 @@ def get_ligands(pdb):
     # exclude the ligands in the 'excluded_ligands' list
     for res in topology_ligands.residues:
         if res.name not in COMMON_LIGANDS:
-            ligands.append(res.name)
+            ligands.append(res)
 
     return(ligands)
 
