@@ -186,9 +186,8 @@ def load_pdb(pdb_name):
 
     Example: load_pdb('/home/username/1.pdb')
     """
-    pdb_name = Path(pdb_name).resolve()
-    if pdb_name.is_file():
-        return md.load_pdb(str(pdb_name))
+    if Path(pdb_name).is_file():
+        return md.load_pdb(pdb_name)
     else:
         # pdb_name is a PDB ID
         link = f'http://www.rcsb.org/pdb/files/{pdb_name}.pdb'
