@@ -191,7 +191,7 @@ def load_pdb(pdb_name):
         return md.load_pdb(str(pdb_name))
     else:
         # pdb_name is a PDB ID
-        link = 'http://www.rcsb.org/pdb/files/' + pdb_name + '.pdb'
+        link = f'http://www.rcsb.org/pdb/files/{pdb_name}.pdb'
         return md.load_pdb(link)
 
 
