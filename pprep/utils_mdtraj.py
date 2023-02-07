@@ -299,11 +299,13 @@ def associate_ligand_to_chain(dist):
 
     return d
 
-def save_chain_ligand_pdb(pdb,ligands,protein_chains, ligand_chain):
+def save_chain_ligand_pdb(pdbid,pdb,ligands,protein_chains, ligand_chain):
     """
     
     Parameters
     ----------
+    pdbid: string
+        it is the PDB Id of the protein 
     pdb: mdtraj object
         it is the object that load_pdb() returns
     protein_chains: list of arrays
@@ -315,20 +317,21 @@ def save_chain_ligand_pdb(pdb,ligands,protein_chains, ligand_chain):
         
     Returns
     ----------
-    It saves the protein chain and the ligand into two separated pdb files. It returns 'Well saved!' if 
-    everything went okey.
+    It saves the protein chain and the ligand into two separated pdb files in a file named <pdbid>. 
+    It returns 'Well saved!' if everything went okey.
     
     """
+    os.mkdir(pdbid)
     for i in range(len(ligands)):
         lig = pdb.atom_slice(ligands[i])
         chain = pdb.atom_slice(protein_chains[ligand_chain[i]])
-        
-        directory = f"chain_lig_{i}"
-        
+
+        directory = f"{pdbid}/chain_lig_{i}"
+
         os.mkdir(directory)
-        
-        lig.save_pdb(directory + f"/ligand_{i}.pdb")
-        chain.save_pdb(directory + f"/chain_{i}.pdb")
+
+        lig.save_pdb(f"{directory}/ligand_{i}.pdb")
+        chain.save_pdb(f"{directory}/chain_{i}.pdb")
 
     return("Well saved!")
 
