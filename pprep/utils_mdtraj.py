@@ -193,22 +193,6 @@ def load_pdb(pdb_name):
         link = f'http://www.rcsb.org/pdb/files/{pdb_name}.pdb'
         return md.load_pdb(link)
 
-
-def get_ligands(pdb):
-    ligands = []
-
-    top = pdb.top
-    idx = top.select("not protein and not water")
-    subset = pdb.atom_slice(idx)
-    topology_ligands = subset.top
-
-    # exclude the ligands in the 'excluded_ligands' list
-    for res in topology_ligands.residues:
-        if res.name not in COMMON_LIGANDS:
-            ligands.append(res)
-
-    return(ligands)
-
 def select_chain(pdb, n, selection=None):
     """select atomic ids for chain with index `n`"""
     idx = pdb.top.select(f'(chainid {n}) and {selection}')
@@ -229,51 +213,35 @@ def select_protein_chains(pdb):
             protein_chains.append(chain)
     return protein_chains
 
-def select_ligands(pdb):
-    """Return the atomic indices of each ligand"""
+
+def select_ligands(pdb, common_residues=COMMON_LIGANDS):
+    """ get the atomic indices of each ligand (common residues included) """
     n_chains = len(list(pdb.top.chains))
-    ligands = []
+    all_ligands_idx = []
     for n in range(n_chains):
         try:
             chain = select_chain(pdb, n, selection='not protein and not water')
         except ValueError:
             pass
         else:
-            ligands.append(chain)
-    return ligands
+            all_ligands_idx.append(chain)
 
-def select_common_ligands(pdb,ligands):
-    """Return the atomic indices of the common ligands"""
-    atoms_common_ligands = []
-    for i in range(len(ligands)):
-        lig = pdb.atom_slice(ligands[i])
-        for res in lig.top.residues:
-            if res.name in COMMON_LIGANDS:
-                idx = pdb.top.select(f"resname {res.name}")
-                atoms_common_ligands.append(idx)
+    """ get atomic indices of the common residues """
+    common_residues_idx = []
+    for res in pdb.top.residues:
+        if res.name in common_residues:
+            common_residues_idx.append(pdb.top.select(f"resname == {res.name}"))
 
-    return(atoms_common_ligands)
+    """ select all ligands but the common residues """
+    definitive_ligands_idx = []
+    for i in range(len(all_ligands_idx)):
+        definitive_ligands_idx.append(np.setdiff1d(all_ligands_idx[i],common_residues_idx[i]))
+
+    return definitive_ligands_idx
 
 
 
-def select_definitive_ligands(ligands, common_ligands):
-    """
 
-    Parameters
-    ----------
-    ligands: list of arrays
-        it contains the atomic indices of the ligands of interest
-
-    Returns
-    ----------
-    List of arrays, each of them containing the atomic indices of the ligands of interest
-
-    """
-    definitive_ligands = []
-    for i in range(len(ligands)):
-        definitive_ligands.append(np.setdiff1d(ligands[i],common_ligands[i]))
-
-    return(definitive_ligands)
 
 def compute_distance_chain_ligand(pdb,protein_chains, ligands):
     """
