@@ -2,6 +2,7 @@ import mdtraj as md
 import numpy as np
 import itertools 
 import os
+from pathlib import Path
 
 COMMON_LIGANDS = '''
 1PE
@@ -180,9 +181,19 @@ def common_ligands(data, n=100):
     return(excluded_ligands)
 
 def load_pdb(pdb_name):
-    link = 'http://www.rcsb.org/pdb/files/' + pdb_name + '.pdb'
-    pdb = md.load_pdb(link)
-    return(pdb)
+    """
+    Parse a pdb file/fetch a structure from the PDB.
+
+    Example: load_pdb('/home/username/1.pdb')
+    """
+    pdb_name = Path(pdb_name).resolve()
+    if pdb_name.is_file():
+        return md.load_pdb(str(pdb_name))
+    else:
+        # pdb_name is a PDB ID
+        link = 'http://www.rcsb.org/pdb/files/' + pdb_name + '.pdb'
+        return md.load_pdb(link)
+
 
 def get_ligands(pdb):
     ligands = []
