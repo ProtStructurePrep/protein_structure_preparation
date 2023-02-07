@@ -321,17 +321,18 @@ def save_chain_ligand_pdb(pdbid,pdb,ligands,protein_chains, ligand_chain):
     It returns 'Well saved!' if everything went okey.
     
     """
-    os.mkdir(pdbid)
+    dir1 = f"out_{pdbid}"
+    os.mkdir(dir1)
     for i in range(len(ligands)):
         lig = pdb.atom_slice(ligands[i])
         chain = pdb.atom_slice(protein_chains[ligand_chain[i]])
 
-        directory = f"{pdbid}/chain_lig_{i}"
+        dir2 = f"{dir1}/chain_lig_{i}"
 
-        os.mkdir(directory)
+        os.mkdir(dir2)
 
-        lig.save_pdb(f"{directory}/ligand_{i}.pdb")
-        chain.save_pdb(f"{directory}/chain_{i}.pdb")
+        lig.save_pdb(f"{dir2}/ligand_{i}.pdb")
+        chain.save_pdb(f"{dir2}/chain_{i}.pdb")
 
     return("Well saved!")
 

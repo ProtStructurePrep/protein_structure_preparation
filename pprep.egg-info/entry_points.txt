@@ -1,0 +1,2 @@
+[console_scripts]
+pprep-split_chains = pprep.entry_points:cli

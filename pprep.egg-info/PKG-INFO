@@ -1,0 +1,18 @@
+Metadata-Version: 2.1
+Name: pprep
+Version: 0.1
+Home-page: 
+Author: Eva Martin, Simone Marsili
+Author-email: 
+License: MIT
+Classifier: Development Status :: 1 - Planning
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python :: 3
+License-File: LICENSE.txt
+
+TFG
+protein_structure_preparation
+=============================
+
+
+## Install
