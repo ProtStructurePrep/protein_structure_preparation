@@ -23,8 +23,7 @@ def quick_fix(pdbid):
     return fixer
 
 def prepare_protein(
-    pdb_file, ignore_missing_residues=True, ignore_terminal_missing_residues=True, ph=7.0
-):
+    pdb_file, output_file, ignore_missing_residues=True, ignore_terminal_missing_residues=True, ph=7.0):
     """
     Use pdbfixer to prepare the protein from a PDB file. Hetero atoms such as ligands are
     removed and non-standard residues replaced. Missing atoms to existing residues are added.
@@ -68,4 +67,5 @@ def prepare_protein(
     fixer.findMissingAtoms()  # find missing heavy atoms
     fixer.addMissingAtoms()  # add missing atoms and residues
     fixer.addMissingHydrogens(ph)  # add missing hydrogens
+    PDBFile.writeFile(fixer.topology, fixer.positions, open(output_file, 'w'))
     return fixer

@@ -1,6 +1,7 @@
 import mdtraj as md
 import numpy as np
 import itertools 
+import os
 
 COMMON_LIGANDS = '''
 1PE
@@ -337,12 +338,17 @@ def save_chain_ligand_pdb(pdb,ligands,protein_chains, ligand_chain):
     It saves the protein chain and the ligand into two separated pdb files. It returns 'Well saved!' if 
     everything went okey.
     
-    """   
+    """
     for i in range(len(ligands)):
         lig = pdb.atom_slice(ligands[i])
         chain = pdb.atom_slice(protein_chains[ligand_chain[i]])
-
-        lig.save_pdb(f"ligand_{i}.pdb")
-        chain.save_pdb(f"chain_{i}.pdb")
         
+        directory = f"chain_lig_{i}"
+        
+        os.mkdir(directory)
+        
+        lig.save_pdb(directory + f"/ligand_{i}.pdb")
+        chain.save_pdb(directory + f"/chain_{i}.pdb")
+
     return("Well saved!")
+
