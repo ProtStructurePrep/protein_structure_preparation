@@ -6,7 +6,7 @@ def get_files(pdb_name):
 
     Given a pdb_name, create a folder (named <pdb_name>) that will contain:
     - a folder for each of the chains
-        - inside each folder we can find the pdb of the protein chain and the pdb of the protein ligand
+        - inside each folder we can find the pdb of the protein chain and the pdb of the ligand
     
     """
     pdb = md.load_pdb(pdb_name=pdb_name)
