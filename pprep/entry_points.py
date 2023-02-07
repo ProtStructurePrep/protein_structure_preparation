@@ -1,8 +1,9 @@
-kkimport pprep.utils_mdtraj as md
+import pprep.utils_mdtraj as md
 import nglview as nv
 import numpy as np 
 import pprep.utils_pdbfixer as pdbfix
 import sys
+
 
 def get_files(pdb_name):
     pdb = md.load_pdb(pdb_name=pdb_name)
@@ -15,5 +16,8 @@ def get_files(pdb_name):
     md.save_chain_ligand_pdb(pdb, ligands,protein_chains, ligand_chain)
     return("Files created")
 
-print(get_files(sys.argv[1]))
+
+def cli():
+    pdb = sys.argv[1]
+    get_files(pdb)
 

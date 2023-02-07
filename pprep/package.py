@@ -14,4 +14,6 @@ __classifiers__ = [
     'Programming Language :: Python :: 3',
 ]
 __scripts__ = []
-__entry_points__ = {}
+__entry_points__ = {
+    'pprep-split_chains': 'pprep.entry_points:cli'
+}

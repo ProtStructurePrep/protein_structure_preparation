@@ -254,7 +254,9 @@ def select_common_ligands(pdb,ligands):
 
     return(atoms_common_ligands)
 
-def select_definitive_ligands(ligands,common_ligands):
+
+
+def select_definitive_ligands(ligands, common_ligands):
     """
 
     Parameters
