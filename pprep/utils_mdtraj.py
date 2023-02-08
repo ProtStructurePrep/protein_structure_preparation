@@ -311,10 +311,9 @@ def compute_distance_chain_ligand(pdb,protein_chains, ligands):
 
     Returns
     ----------
-    List of arrays, each of them containing the distances between each ligand and each protein chain
-    The order of the array is as follows: (ligand_1-chain_1), (ligand_1-chain_2), (ligand_1-chain_3) ... ,
-    (ligand_2-chain_1), (ligand_2-chain_2), (ligand_2-chain_3) ...
-
+    Dictionary wich key is the number of ligand (0-based) and wich value is a list of
+    arrays, each of them containing the distances between the ligand atoms and each protein chain atoms.
+    
     """
     distances = {}
     for nlig in range(len(ligands)):
