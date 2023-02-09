@@ -1,5 +1,8 @@
 import pprep.utils_mdtraj as md
 import sys
+import os 
+
+os.mkdir("outputs")
 
 def get_files(pdb_name):
     """
