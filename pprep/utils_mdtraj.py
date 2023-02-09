@@ -352,7 +352,7 @@ def associate_ligand_to_chain(dist):
 
     return d
 
-def save_chain_ligand_pdb(pdbid,pdb,ligands,protein_chains, ligand_chain):
+def save_chain_ligand_pdb(pdbid, pdb, ligands, protein_chains, ligand_chain, output_directory):
     """
     
     Parameters
@@ -367,6 +367,8 @@ def save_chain_ligand_pdb(pdbid,pdb,ligands,protein_chains, ligand_chain):
         it contains the atomic indices of the ligands of interest
     ligand_chain: dictionary
         it contains the ligand index as key and the protein chain index as value
+    output_directory: str
+        Directory in wich the files will be saved.
         
     Returns
     ----------
@@ -374,7 +376,7 @@ def save_chain_ligand_pdb(pdbid,pdb,ligands,protein_chains, ligand_chain):
     It returns 'Well saved!' if everything went okey.
     
     """
-    dir1 = f"out_{pdbid}"
+    dir1 = f"{output_directory}/out_{pdbid}"
     os.mkdir(dir1)
     for i in range(len(ligands)):
         lig = pdb.atom_slice(ligands[i])
@@ -388,4 +390,3 @@ def save_chain_ligand_pdb(pdbid,pdb,ligands,protein_chains, ligand_chain):
         chain.save_pdb(f"{dir2}/chain_{i}.pdb")
 
     return("Well saved!")
-
