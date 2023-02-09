@@ -72,6 +72,11 @@ def prepare_protein(
     return fixer
 
 def apply_pdbfixer():
+	"""
+    
+    Iterate over all the protein chains in the output directory to create the corrected pdb.
+    
+    """
     for directory1 in os.listdir("outputs/"): # for each different protein
         for directory2 in os.listdir(f"outputs/{directory1}"): # for each chain-ligand folder
             for file in os.listdir(f"outputs/{directory1}/{directory2}"): # for each protein chain
