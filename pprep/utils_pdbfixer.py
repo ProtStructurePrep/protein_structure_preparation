@@ -72,7 +72,7 @@ def prepare_protein(
     return fixer
 
 def apply_pdbfixer():
-	"""
+    """
     
     Iterate over all the protein chains in the output directory to create the corrected pdb.
     
