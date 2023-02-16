@@ -7,6 +7,7 @@ from openmm.app import PDBFile, Simulation, Modeller, PDBReporter, DCDReporter, 
 from simtk.openmm import app, Platform, LangevinIntegrator
 from openmmforcefields.generators import SystemGenerator
 from openff.toolkit.topology import Molecule, Topology
+from openmm import unit
 
 def simple_protein_simulation(pdb_file):
     # reading protein and force field files
