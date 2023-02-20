@@ -4,6 +4,7 @@ import itertools
 import os
 from pathlib import Path
 
+
 COMMON_LIGANDS = '''
 1PE
 3DR
@@ -166,9 +167,9 @@ XYP
 ZN
 '''.split()
 
+
 def common_residues(data, n=100):
     """
-    
     Get the pdb residues that are common.
     
     Parameters
@@ -184,7 +185,6 @@ def common_residues(data, n=100):
     Returns
     ----------
     List of the common residues.
-
     """
     excluded_ligands = []
     threshold = n # check threshold
@@ -193,29 +193,27 @@ def common_residues(data, n=100):
         line = line.split()
         ligand = line[0]
         n_prot = len(line[1:])
-        # print(ligand, n_prot)
         if n_prot > threshold:
             excluded_ligands.append(ligand)
 
-    return(excluded_ligands)
+    return excluded_ligands
 
 def load_pdb(pdb_name):
     """
-    
     Parse a pdb file/fetch a structure from the PDB.
     
     Parameters
     ----------
     pdb_name: string
-        it can be either: the pdb file path or the pdb id of the protein
+        it can be either the pdb file path or the pdb id of the protein
     
     Returns
     ----------
     Mdtraj object.
 
     Example: load_pdb('/home/username/1.pdb')
-    
     """
+    
     if Path(pdb_name).is_file():
         return md.load_pdb(pdb_name)
     else:
@@ -225,8 +223,7 @@ def load_pdb(pdb_name):
         
 def select_chain(pdb, n):
     """
-
-    Select atomic ids for protein chain with index `n`
+    Select atomic ids for protein chain with index `n`.
     
     Parameters
     ----------
@@ -238,10 +235,7 @@ def select_chain(pdb, n):
     Returns
     ----------
     numpy.ndarray containg the atomic indices of the protein chain specified.
-    
-    
     """
-    
     idx = pdb.top.select(f'(chainid {n}) and protein')
     
     if len(idx) == 0:
@@ -260,11 +254,12 @@ def select_protein_chains(pdb):
     
     Returns
     ----------
-    List of arrays containing the atomic indices of each protein chain
-    
+    List of numpy.ndarray containing the atomic indices of each protein chain
     """
+    
     n_chains = len(list(pdb.top.chains))
     protein_chains = []
+    
     for n in range(n_chains):
         try:
             chain = select_chain(pdb, n)
@@ -272,12 +267,12 @@ def select_protein_chains(pdb):
             pass
         else:
             protein_chains.append(chain)
+            
     return protein_chains
 
 
 def select_ligands(pdb):
     """
-    
     Parameters
     ----------
     pdb: mdtraj object
@@ -285,9 +280,7 @@ def select_ligands(pdb):
     
     Returns
     ----------
-    List of arrays containing the atomic indices of each ligand
-    
-    
+    List of arrays containing the atomic indices of each ligand.
     """
     idx_ligands = []
     
@@ -297,9 +290,8 @@ def select_ligands(pdb):
     
     return idx_ligands
 
-def compute_distance_chain_ligand(pdb,protein_chains, ligands):
+def compute_distance_chain_ligand(pdb, protein_chains, ligands):
     """
-
     Parameters
     ----------
     pdb: mdtraj object
@@ -311,11 +303,11 @@ def compute_distance_chain_ligand(pdb,protein_chains, ligands):
 
     Returns
     ----------
-    Dictionary wich key is the number of ligand (0-based) and wich value is a list of
+    Dictionary. Its key is the number of ligand (0-based) and its value is a list of
     arrays, each of them containing the distances between the ligand atoms and each protein chain atoms.
-    
     """
     distances = {}
+    
     for nlig in range(len(ligands)):
         l = []
         for nchain in range(len(protein_chains)):
@@ -323,11 +315,11 @@ def compute_distance_chain_ligand(pdb,protein_chains, ligands):
             d = md.compute_distances(pdb, pairs)
             l.append(d)
         distances[nlig] = l
+        
     return distances
 
 def associate_ligand_to_chain(dist):
     """
-
     Parameters
     ----------
     dist: dictionary of lists containing numpy.ndarray
@@ -335,17 +327,15 @@ def associate_ligand_to_chain(dist):
 
     Returns
     ----------
-    A dictionary with the ligand index as key and the most closest chain as value
-
+    A dictionary with the ligand index as key and the most closest chain as value.
     """
-
     d = {}
+    
     for i in range(len(dist)): # for each ligand
         l = []
         for j in range(len(dist[i])): # for each array of distances
             min1 = np.amin(dist[i][j])
             l.append(min1)
-
         min_dist = min(l)
         closest_chain = l.index(min_dist)
         d[i] = closest_chain
@@ -354,6 +344,8 @@ def associate_ligand_to_chain(dist):
 
 def save_chain_ligand_pdb(pdbid, pdb, ligands, protein_chains, ligand_chain, output_directory):
     """
+    Create a directory called `pdbid` with a directory for each ligand. In each ligand
+    directory you can find the pdb of the ligand and the pdb of its associated chain.
     
     Parameters
     ----------
@@ -366,27 +358,23 @@ def save_chain_ligand_pdb(pdbid, pdb, ligands, protein_chains, ligand_chain, out
     ligands: list of arrays
         it contains the atomic indices of the ligands of interest
     ligand_chain: dictionary
-        it contains the ligand index as key and the protein chain index as value
+        it contains the ligand index as key and its the index of its associated chain as value
     output_directory: str
         Directory in wich the files will be saved.
-        
-    Returns
-    ----------
-    It saves the protein chain and the ligand into two separated pdb files in a file named <pdbid>. 
-    It returns 'Well saved!' if everything went okey.
-    
     """
-    dir1 = f"{output_directory}/out_{pdbid}"
+    
+    dir1 = f"{output_directory}/out_{pdbid}" # create the protein directory
     os.mkdir(dir1)
+    
     for i in range(len(ligands)):
         lig = pdb.atom_slice(ligands[i])
         chain = pdb.atom_slice(protein_chains[ligand_chain[i]])
 
-        dir2 = f"{dir1}/chain_lig_{i}"
+        dir2 = f"{dir1}/chain_lig_{i}" # create the 
 
         os.mkdir(dir2)
 
         lig.save_pdb(f"{dir2}/ligand_{i}.pdb")
         chain.save_pdb(f"{dir2}/chain_{i}.pdb")
 
-    return("Well saved!")
+    print("Well saved!")

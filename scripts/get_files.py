@@ -3,15 +3,19 @@ import pprep.utils_pdbfixer as pdbfix
 import sys
 import os 
 
+
 os.mkdir("outputs")
 
 def get_files(pdb_name):
     """
-
-    Given a pdb_name, create a folder (named <pdb_name>) that will contain:
+    Create a folder (named <pdb_name>) that will contain:
     - a folder for each of the chains
-        - inside each folder we can find the pdb of the protein chain and the pdb of the ligand
-    
+        - inside each folder the pdb of the protein chain and the pdb of the ligand
+        
+    Parameters
+    ----------
+    pdb_name: string
+        it can be either the pdb file path or the pdb id of the protein  
     """
     pdb = md.load_pdb(pdb_name=pdb_name)
     protein_chains = md.select_protein_chains(pdb)
@@ -20,7 +24,7 @@ def get_files(pdb_name):
     ligand_chain = md.associate_ligand_to_chain(dist)
     md.save_chain_ligand_pdb(pdb_name, pdb, ligands,protein_chains, ligand_chain, "outputs")
     pdbfix.apply_pdbfixer()
-    return("Files created")
+    print("Files created")
 
 for i in sys.argv[1:]:
     print(i)

@@ -3,25 +3,29 @@ from pdbfixer import PDBFixer
 from openmm.app import PDBFile
 import os
 
-def chains_id(pdbid):
-    l = []
-    fixer = pdbfixer.PDBFixer(pdbid + '.pdb')
-    for c in fixer.topology.chains():
-        l.append(c.id)
-    return(l)
 
-def quick_fix(pdbid):
-    fixer = PDBFixer(filename=pdbid + '.pdb')
-    fixer.findMissingResidues()
-    fixer.findNonstandardResidues()
-    fixer.replaceNonstandardResidues()
-    fixer.removeHeterogens(True)
-    fixer.findMissingAtoms()
-    fixer.addMissingAtoms()
-    fixer.addMissingHydrogens(7.0)
-    fixer.addSolvent(fixer.topology.getUnitCellDimensions())
-    PDBFile.writeFile(fixer.topology, fixer.positions, open(pdbid + 'corrected' + '.pdb', 'w'))
-    return fixer
+def chains_id(pdb_file):
+    """
+    Use pdbfixer to get a list of the ids of the chains in a protein.
+
+    Parameters
+    ----------
+    pdb_file: string
+        pdb file path
+
+    Returns
+    -------
+    ids: list
+        contains all the chains ids.
+    """
+    
+    ids = []
+    fixer = pdbfixer.PDBFixer(pdb_file)
+    
+    for c in fixer.topology.chains():
+        ids.append(c.id)
+        
+    return ids
 
 def prepare_protein(
     pdb_file, output_file, ignore_missing_residues=True, ignore_terminal_missing_residues=True, ph=7.0):
@@ -72,11 +76,8 @@ def prepare_protein(
     return fixer
 
 def apply_pdbfixer():
-    """
+    """ Iterate over all the protein chains in the `output` directory to create the corrected pdb file. """
     
-    Iterate over all the protein chains in the output directory to create the corrected pdb.
-    
-    """
     for directory1 in os.listdir("outputs/"): # for each different protein
         for directory2 in os.listdir(f"outputs/{directory1}"): # for each chain-ligand folder
             for file in os.listdir(f"outputs/{directory1}/{directory2}"): # for each protein chain

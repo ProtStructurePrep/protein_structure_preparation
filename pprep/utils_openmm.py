@@ -1,21 +1,33 @@
-from openmm.app import *
-from openmm import *
-from openmm.unit import *
+from openmm.app import PDBFile, ForceField, PME, HBonds, Simulation, PDBReporter, StateDataReporter, Modeller, DCDReporter
+from openmm.unit import nanometer, kelvin, picoseconds, picosecond
+from openmm import LangevinMiddleIntegrator
 from sys import stdout
 import copy
-from openmm.app import PDBFile, Simulation, Modeller, PDBReporter, DCDReporter, StateDataReporter
 from simtk.openmm import app, Platform, LangevinIntegrator
 from openmmforcefields.generators import SystemGenerator
 from openff.toolkit.topology import Molecule, Topology
 from openmm import unit
+from pprep.utils_rdkit import prepare_ligand
 
-def simple_protein_simulation(pdb_file):
-    # reading protein and force field files
+
+def simple_protein_simulation(pdb_file, reportInterval, steps):
+    """
+    Use OpenMM to do a protein simulation.
+
+    Parameters
+    ----------
+    pdb_file: string
+        pdb file path
+    reportInterval: int
+        The interval (in time steps) at which to write frames
+    steps: int
+        Number of time steps
+    """
+    # read protein and force field files
     pdb = PDBFile(pdb_file)
     forcefield = ForceField('amber14-all.xml', 'amber14/tip3pfb.xml')
 
-
-    # creating the system
+    # create the system
     system = forcefield.createSystem(pdb.topology, nonbondedMethod=PME,
             nonbondedCutoff=1*nanometer, constraints=HBonds)
     integrator = LangevinMiddleIntegrator(300*kelvin, 1/picosecond, 0.004*picoseconds)
@@ -27,16 +39,39 @@ def simple_protein_simulation(pdb_file):
     # minimize the energy
     simulation.minimizeEnergy()
 
-    # adding reporteres
-    simulation.reporters.append(PDBReporter('output.pdb', 1000))
-    simulation.reporters.append(StateDataReporter(stdout, 1000, step=True,
+    # add reporteres
+    simulation.reporters.append(PDBReporter('output_simple_simulation.pdb', reportInterval))
+    simulation.reporters.append(StateDataReporter(stdout, reportInterval, step=True,
             potentialEnergy=True, temperature=True))
 
-    # running simulation
-    simulation.step(10000)
+    # run the simulation
+    simulation.step(steps)
 
-def create_modeller(prot, ligand_mol):
-    modeller = Modeller(prot.topology, prot.positions)
+def create_modeller(chain_file, ligand_file, ligand_name, smiles):
+    """ 
+    Use OpenMM to create the Modeller object, having the protein chain and the ligand.
+    
+    Parameters
+    ----------
+    chain_file: str
+        PDB file corrected previously by PDBFixer
+    ligand_file: str
+        PDB file of the ligand
+    ligand_name: str
+        Name of the ligand
+    Smiles: str
+        Smiles code of the ligand
+
+    Returns
+    -------
+    modeller: openmm.app.modeller.Modeller
+        Modeller object with the protein chain and the ligand.
+    """
+    protein = PDBFile(chain_file)
+    rdkit_ligand = prepare_ligand(ligand_file, ligand_name, smiles, depict=False)
+    ligand_mol = Molecule(rdkit_ligand)
+    
+    modeller = Modeller(protein.topology, protein.positions)
     modeller.add(ligand_mol.to_topology().to_openmm(), ligand_mol.conformers[0])
     return modeller
 
