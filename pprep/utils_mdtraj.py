@@ -170,7 +170,7 @@ ZN
 
 def common_residues(data, n=100):
     """
-    Get the pdb residues that are common.
+    Get the pdb residues that are fond in more than `n` proteins in the PDB.
     
     Parameters
     ----------
@@ -285,8 +285,9 @@ def select_ligands(pdb):
     idx_ligands = []
     
     for res in pdb.top.residues: 
-        if not res.is_protein and not res.is_water and res.name not in COMMON_LIGANDS:
-            idx_ligands.append(pdb.top.select(f"resid {res.index}"))
+        if not res.is_protein and not res.is_water:
+            if res.name not in COMMON_LIGANDS:
+                idx_ligands.append(pdb.top.select(f"resid {res.index}"))
     
     return idx_ligands
 
