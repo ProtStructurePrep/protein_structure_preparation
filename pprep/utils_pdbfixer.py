@@ -75,13 +75,22 @@ def prepare_protein(
     PDBFile.writeFile(fixer.topology, fixer.positions, open(output_file, 'w'))
     return fixer
 
-def apply_pdbfixer():
-    """ Iterate over all the protein chains in the `output` directory to create the corrected pdb file. """
+def apply_pdbfixer(output_directory):
+    """ 
+    Iterate over all the protein chains in the `output` directory to create the corrected pdb file. 
     
-    for directory1 in os.listdir("outputs/"): # for each different protein
-        for directory2 in os.listdir(f"outputs/{directory1}"): # for each chain-ligand folder
-            for file in os.listdir(f"outputs/{directory1}/{directory2}"): # for each protein chain
+    Parameters
+    ----------
+    output_directory: string
+        directory where all the chain files are found (is the output directory created by save_chain_ligand_pdb()
+        in utils_mdtraj)
+    
+    """
+    
+    for directory1 in os.listdir(output_directory): # for each different protein
+        for directory2 in os.listdir(f"{output_directory}/{directory1}"): # for each chain-ligand folder
+            for file in os.listdir(f"{output_directory}/{directory1}/{directory2}"): # for each protein chain
                 if "chain" in file:
-                    prepare_protein(f"outputs/{directory1}/{directory2}/{file}",f"outputs/{directory1}/{directory2}/corrected_{file}")
+                    prepare_protein(f"{output_directory}/{directory1}/{directory2}/{file}",f"{output_directory}/{directory1}/{directory2}/corrected_{file}")
                     
     print("PDBFixer applied")

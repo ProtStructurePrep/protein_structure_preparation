@@ -47,29 +47,21 @@ def simple_protein_simulation(pdb_file, reportInterval, steps):
     # run the simulation
     simulation.step(steps)
 
-def create_modeller(chain_file, ligand_file, ligand_name, smiles):
+def create_modeller(protein, ligand_mol):
     """ 
     Use OpenMM to create the Modeller object, having the protein chain and the ligand.
     
     Parameters
     ----------
-    chain_file: str
-        PDB file corrected previously by PDBFixer
-    ligand_file: str
-        PDB file of the ligand
-    ligand_name: str
-        Name of the ligand
-    Smiles: str
-        Smiles code of the ligand
+    protein:
+    
+    ligand_mol:
 
     Returns
     -------
     modeller: openmm.app.modeller.Modeller
         Modeller object with the protein chain and the ligand.
     """
-    protein = PDBFile(chain_file)
-    rdkit_ligand = prepare_ligand(ligand_file, ligand_name, smiles, depict=False)
-    ligand_mol = Molecule(rdkit_ligand)
     
     modeller = Modeller(protein.topology, protein.positions)
     modeller.add(ligand_mol.to_topology().to_openmm(), ligand_mol.conformers[0])
