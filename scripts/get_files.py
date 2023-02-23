@@ -4,8 +4,6 @@ import sys
 import os 
 
 
-os.mkdir("outputs")
-
 def get_files(pdb_name):
     """
     Create a folder (named <pdb_name>) that will contain:
@@ -24,7 +22,7 @@ def get_files(pdb_name):
     ligand_chain = md.associate_ligand_to_chain(dist)
     md.save_chain_ligand_pdb(pdb_name, pdb, ligands,protein_chains, ligand_chain, "outputs")
     pdbfix.apply_pdbfixer()
-    print("Files created")
+    return("Files created")
 
 for i in sys.argv[1:]:
     print(i)

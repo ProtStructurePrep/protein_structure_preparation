@@ -345,7 +345,7 @@ def associate_ligand_to_chain(dist):
 
 def save_chain_ligand_pdb(pdbid, pdb, ligands, protein_chains, ligand_chain, output_directory):
     """
-    Create a directory called `pdbid` with a directory for each ligand. In each ligand
+    Create a directory called `out_pdbid` with a directory for each ligand. In each ligand
     directory you can find the pdb of the ligand and the pdb of its associated chain.
     
     Parameters
@@ -363,7 +363,9 @@ def save_chain_ligand_pdb(pdbid, pdb, ligands, protein_chains, ligand_chain, out
     output_directory: str
         Directory in wich the files will be saved.
     """
-    
+    if not os.path.exists(output_directory):
+        os.mkdir(output_directory)
+  
     dir1 = f"{output_directory}/out_{pdbid}" # create the protein directory
     os.mkdir(dir1)
     
@@ -371,7 +373,7 @@ def save_chain_ligand_pdb(pdbid, pdb, ligands, protein_chains, ligand_chain, out
         lig = pdb.atom_slice(ligands[i])
         chain = pdb.atom_slice(protein_chains[ligand_chain[i]])
 
-        dir2 = f"{dir1}/chain_lig_{i}" # create the 
+        dir2 = f"{dir1}/chain_lig_{i}" # create the ligand directory
 
         os.mkdir(dir2)
 

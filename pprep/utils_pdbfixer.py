@@ -83,3 +83,5 @@ def apply_pdbfixer():
             for file in os.listdir(f"outputs/{directory1}/{directory2}"): # for each protein chain
                 if "chain" in file:
                     prepare_protein(f"outputs/{directory1}/{directory2}/{file}",f"outputs/{directory1}/{directory2}/corrected_{file}")
+                    
+    print("PDBFixer applied")
