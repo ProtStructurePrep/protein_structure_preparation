@@ -3,6 +3,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
 
+
 def prepare_ligand(pdb_file, resname, smiles, depict=True):
     """
     Prepare a ligand from a PDB file via adding hydrogens and assigning bond orders. A depiction

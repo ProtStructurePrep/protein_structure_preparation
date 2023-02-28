@@ -186,7 +186,7 @@ def common_residues(data, n=100):
     ----------
     List of the common residues.
     """
-    excluded_ligands = []
+    excluded_residues = []
     threshold = n # check threshold
 
     for line in data:
@@ -194,9 +194,9 @@ def common_residues(data, n=100):
         ligand = line[0]
         n_prot = len(line[1:])
         if n_prot > threshold:
-            excluded_ligands.append(ligand)
+            excluded_residues.append(ligand)
 
-    return excluded_ligands
+    return excluded_residues
 
 def load_pdb(pdb_name):
     """
@@ -245,7 +245,7 @@ def select_chain(pdb, n):
 
 def select_protein_chains(pdb):
     """
-    Return the atomic indices of each protein chain.
+    Select the atomic indices of each protein chain.
     
     Parameters
     ----------
@@ -273,6 +273,8 @@ def select_protein_chains(pdb):
 
 def select_ligands(pdb):
     """
+    Select the atomic indices of the ligands.
+    
     Parameters
     ----------
     pdb: mdtraj object
@@ -293,6 +295,8 @@ def select_ligands(pdb):
 
 def compute_distance_chain_ligand(pdb, protein_chains, ligands):
     """
+    Compute the distance between the ligand atoms and each protein chain atoms.
+    
     Parameters
     ----------
     pdb: mdtraj object
@@ -321,6 +325,9 @@ def compute_distance_chain_ligand(pdb, protein_chains, ligands):
 
 def associate_ligand_to_chain(dist):
     """
+    Associate each ligand to a protein chain by considering the distance at which the ligand is 
+    from the protein chain.
+    
     Parameters
     ----------
     dist: dictionary of lists containing numpy.ndarray
@@ -328,7 +335,7 @@ def associate_ligand_to_chain(dist):
 
     Returns
     ----------
-    A dictionary with the ligand index as key and the most closest chain as value.
+    A dictionary with the ligand index as key and the most closest chain index as value.
     """
     d = {}
     
@@ -337,6 +344,7 @@ def associate_ligand_to_chain(dist):
         for j in range(len(dist[i])): # for each array of distances
             min1 = np.amin(dist[i][j])
             l.append(min1)
+            
         min_dist = min(l)
         closest_chain = l.index(min_dist)
         d[i] = closest_chain
@@ -345,7 +353,7 @@ def associate_ligand_to_chain(dist):
 
 def save_chain_ligand_pdb(pdbid, pdb, ligands, protein_chains, ligand_chain, output_directory):
     """
-    Create a directory called `out_pdbid` with a directory for each ligand. In each ligand
+    Create a directory for the protein called `out_pdbid` with a directory for each ligand. In each ligand
     directory you can find the pdb of the ligand and the pdb of its associated chain.
     
     Parameters
