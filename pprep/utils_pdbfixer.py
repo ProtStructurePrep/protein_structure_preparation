@@ -51,8 +51,8 @@ def prepare_protein(
         Prepared protein system.
     """
     fixer = pdbfixer.PDBFixer(str(pdb_file))
-    fixer.removeHeterogens()  # co-crystallized ligands are unknown to PDBFixer
-    fixer.findMissingResidues()  # identify missing residues, needed for identification of missing atoms
+    fixer.removeHeterogens() 
+    fixer.findMissingResidues()  
 
     # if missing terminal residues shall be ignored, remove them from the dictionary
     if ignore_terminal_missing_residues:
@@ -67,11 +67,11 @@ def prepare_protein(
     if ignore_missing_residues:
         fixer.missingResidues = {}
 
-    fixer.findNonstandardResidues()  # find non-standard residue
-    fixer.replaceNonstandardResidues()  # replace non-standard residues with standard one
-    fixer.findMissingAtoms()  # find missing heavy atoms
-    fixer.addMissingAtoms()  # add missing atoms and residues
-    fixer.addMissingHydrogens(ph)  # add missing hydrogens
+    fixer.findNonstandardResidues()  
+    fixer.replaceNonstandardResidues()  
+    fixer.findMissingAtoms()  
+    fixer.addMissingAtoms()  
+    fixer.addMissingHydrogens(ph)  
     PDBFile.writeFile(fixer.topology, fixer.positions, open(output_file, 'w'))
     return fixer
 

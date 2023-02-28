@@ -4,15 +4,14 @@ from openmm import LangevinMiddleIntegrator
 from sys import stdout
 import copy
 from simtk.openmm import app, Platform, LangevinIntegrator
-from openmmforcefields.generators import SystemGenerator
+from openmmforcefields.generators import SystemGenerator, GAFFTemplateGenerator
 from openff.toolkit.topology import Molecule, Topology
 from openmm import unit
-from pprep.utils_rdkit import prepare_ligand
 
 
 def simple_protein_simulation(pdb_file, reportInterval, steps):
     """
-    Use OpenMM to do a protein simulation.
+    Use OpenMM to do a simple protein simulation.
 
     Parameters
     ----------
@@ -67,21 +66,37 @@ def create_modeller(protein, ligand_mol):
     modeller.add(ligand_mol.to_topology().to_openmm(), ligand_mol.conformers[0])
     return modeller
 
+def generate_forcefield(
+    rdkit_mol=None, protein_ff="amber14-all.xml", solvent_ff="amber14/tip3pfb.xml"
+):
+    """
+    Generate an OpenMM Forcefield object and register a small molecule.
+
+    Parameters
+    ----------
+    rdkit_mol: rdkit.Chem.rdchem.Mol
+        Small molecule to register in the force field.
+    protein_ff: string
+        Name of the force field.
+    solvent_ff: string
+        Name of the solvent force field.
+
+    Returns
+    -------
+    forcefield: simtk.openmm.app.Forcefield
+        Forcefield with registered small molecule.
+    """
+    forcefield = app.ForceField(protein_ff, solvent_ff)
+
+    if rdkit_mol is not None:
+        gaff = GAFFTemplateGenerator(
+            molecules=Molecule.from_rdkit(rdkit_mol, allow_undefined_stereo=True)
+        )
+        forcefield.registerTemplateGenerator(gaff.generator)
+
+    return forcefield
+    
 def protein_ligand_simulation(modeller, ligand_mol):
-    # check whether we have a GPU platform and if so set the precision to mixed
-    speed = 0
-    for i in range(Platform.getNumPlatforms()):
-        p = Platform.getPlatform(i)
-        # print(p.getName(), p.getSpeed())
-        if p.getSpeed() > speed:
-            platform = p
-            speed = p.getSpeed()
-
-    if platform.getName() == 'CUDA' or platform.getName() == 'OpenCL':
-        platform.setPropertyDefaultValue('Precision', 'mixed')
-        print('Set precision for platform', platform.getName(), 'to mixed')
-
-
     # Prepare the system
     print('Preparing system')
     forcefield_kwargs = { 'constraints': app.HBonds, 'rigidWater': True, 'removeCMMotion': False, 'hydrogenMass': 4*unit.amu }
@@ -123,3 +138,4 @@ def protein_ligand_simulation(modeller, ligand_mol):
     simulation.step(num_steps)
     t1 = time.time()
     print('Simulation complete in', t1 - t0, 'seconds at', temperature)
+

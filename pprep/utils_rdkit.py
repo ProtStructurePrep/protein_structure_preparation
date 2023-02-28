@@ -6,13 +6,15 @@ from rdkit.Chem import Draw
 
 def prepare_ligand(pdb_file, resname, smiles, depict=True):
     """
+    Extracted from: https://projects.volkamerlab.org/teachopencadd/talktorials/T019_md_simulation.html
+    
     Prepare a ligand from a PDB file via adding hydrogens and assigning bond orders. A depiction
     of the ligand before and after preparation is rendered in 2D to allow an inspection of the
     results. Huge thanks to @j-wags for the suggestion.
 
     Parameters
     ----------
-    pdb_file: pathlib.PosixPath
+    pdb_file: string
        PDB file containing the ligand of interest.
     resname: str
         Three character residue name of the ligand.
