@@ -191,10 +191,10 @@ def common_residues(data, n=100):
 
     for line in data:
         line = line.split()
-        ligand = line[0]
+        res = line[0]
         n_prot = len(line[1:])
         if n_prot > threshold:
-            excluded_residues.append(ligand)
+            excluded_residues.append(res)
 
     return excluded_residues
 
@@ -270,10 +270,9 @@ def select_protein_chains(pdb):
             
     return protein_chains
 
-
 def select_ligands(pdb):
     """
-    Select the atomic indices of the ligands.
+    Get the ligand names and the atomic indices of the ligands.
     
     Parameters
     ----------
@@ -282,16 +281,19 @@ def select_ligands(pdb):
     
     Returns
     ----------
-    List of arrays containing the atomic indices of each ligand.
+    Two lists. `ligand_names`, containing the names of the ligands
+    and  `ligand_idx`, containig an array of the ligand atomic indices for each ligand.
     """
-    idx_ligands = []
+    ligand_names = []
+    ligand_idx = []
     
     for res in pdb.top.residues: 
         if not res.is_protein and not res.is_water:
             if res.name not in COMMON_LIGANDS:
-                idx_ligands.append(pdb.top.select(f"resid {res.index}"))
+                ligand_names.append(res.name)
+                ligand_idx.append(pdb.top.select(f"resid {res.index}"))
     
-    return idx_ligands
+    return ligand_names, ligand_idx
 
 def compute_distance_chain_ligand(pdb, protein_chains, ligands):
     """
