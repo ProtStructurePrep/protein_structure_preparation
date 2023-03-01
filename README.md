@@ -4,14 +4,6 @@ Protein-Ligand Complex MD simulations
 =================
 This repository contains the basic steps for parsing proteins and selecting its ligands. Also, it contains the steps of preparing the protein and ligands, by fixing errors in the PDB file.
 
-Requirments
-=================
-* [MDTraj](https://github.com/mdtraj/mdtraj)
-* [nglview](https://github.com/nglviewer/nglview)
-* [OpenMM](https://github.com/openmm/openmm) and [OpenMM Forcefields](https://github.com/openmm/openmmforcefields)
-* [RDKit](https://github.com/rdkit/rdkit)
-* [PDBFixer](https://github.com/openmm/pdbfixer).
-
 Table of contents
 =================
 
@@ -33,5 +25,13 @@ Table of contents
 
 Installation
 ============
+
+Requirments
+=================
+* [MDTraj](https://github.com/mdtraj/mdtraj)
+* [nglview](https://github.com/nglviewer/nglview)
+* [OpenMM](https://github.com/openmm/openmm) and [OpenMM Forcefields](https://github.com/openmm/openmmforcefields)
+* [RDKit](https://github.com/rdkit/rdkit)
+* [PDBFixer](https://github.com/openmm/pdbfixer).
 
 
