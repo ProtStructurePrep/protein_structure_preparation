@@ -1,4 +1,4 @@
-[Requirements](#requirements) | [Installation](#installation) | [Example](#example) | [Usage](#usage) | [Command line](#command-line) | [Acknowledgment](#acknowledgment)
+[Installation](#installation) |  [Requirements](#requirements) | [Example](#example) | [Usage](#usage) | [Command line](#command-line) | [Acknowledgment](#acknowledgment)
 
 Protein-Ligand Complex MD simulations
 =================
@@ -8,23 +8,25 @@ Table of contents
 =================
 
 * [Installation](#installation)
-* [Example](#example)
-* [Showcase from users](#showcase-from-users)
-* [Usage](#usage)
+* [Requirements](#requirements)
 * [Contributing](#contributing)
-* [Command line](#command-line)
-* [API doc](#api-doc)
-* [Interface classes](docs/interface_classes.md)
-* [Changelog](CHANGELOG.md)
-* [FAQ](#faq)
-* [Website](#website)
 * [Acknowledgment](#acknowledgment)
-* [Cite](#cite)
-* [License](#license)
 
 
 Installation
 ============
+To install ....
+
+- Available on `conda-forge` channel
+
+    ```bash
+    conda install nglview -c conda-forge
+    # might need: jupyter-nbextension enable nglview --py --sys-prefix
+
+    # if you already installed nglview, you can `upgrade`
+    conda upgrade nglview --force
+    # might need: jupyter-nbextension enable nglview --py --sys-prefix
+    ```
 
 Requirments
 =================
