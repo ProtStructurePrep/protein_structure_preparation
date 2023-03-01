@@ -28,7 +28,7 @@ To install ....
     # might need: jupyter-nbextension enable nglview --py --sys-prefix
     ```
 
-Requirments
+Requirements
 =================
 * [MDTraj](https://github.com/mdtraj/mdtraj)
 * [nglview](https://github.com/nglviewer/nglview)
