@@ -2,7 +2,7 @@
 
 Protein-Ligand Complex MD simulations
 =================
-The aim of this repository is facilitate the MD simulations procedure. It contains the basic steps for parsing proteins and selecting its ligands. Also, you can find the steps for preparing the protein and ligands, by fixing errors in their PDB files. After this first part of parsing and fixing erros, you will find the steps for simulating the protein and the protein-ligand complex.
+The aim of this repository is to facilitate and automatize the MD simulations procedure. The project can be divided into two major blocks. The first one contains the basic steps for parsing proteins and selecting its ligands. Also, in this first block you can find the steps for preparing the protein and ligand structures, by fixing errors in their respective PDB files. In the second block you can find the steps for simulating the protein and the protein-ligand complex.
 
 For a better understanding of the different functionalities of this program you can use this [Google Colab](https://colab.research.google.com/drive/1x0s3Ui5VQVVR1Esj5_JbqmH5w-PkJGl5?usp=sharing). Here you will find an example pipeline to get familiar with the program.
 
