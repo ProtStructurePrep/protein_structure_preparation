@@ -44,7 +44,6 @@ def prepare_ligand(pdb_file, resname, smiles, depict=True):
     # protonate ligand
     prepared_ligand = Chem.rdmolops.AddHs(prepared_ligand, addCoords=True)
     
-  
     # 2D depiction
     if depict:
         ligand_2d = copy.deepcopy(ligand)

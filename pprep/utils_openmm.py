@@ -70,6 +70,8 @@ def generate_forcefield(
     rdkit_mol=None, protein_ff="amber14-all.xml", solvent_ff="amber14/tip3pfb.xml"
 ):
     """
+    function from: https://projects.volkamerlab.org/teachopencadd/talktorials/T019_md_simulation.html
+    
     Generate an OpenMM Forcefield object and register a small molecule.
 
     Parameters
@@ -97,6 +99,11 @@ def generate_forcefield(
     return forcefield
     
 def protein_ligand_simulation(modeller, ligand_mol):
+	"""
+	https://github.com/tdudgeon/simple-simulate-complex
+	
+	
+	"""
     # Prepare the system
     print('Preparing system')
     forcefield_kwargs = { 'constraints': app.HBonds, 'rigidWater': True, 'removeCMMotion': False, 'hydrogenMass': 4*unit.amu }

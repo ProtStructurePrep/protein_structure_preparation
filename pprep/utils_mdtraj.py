@@ -319,8 +319,7 @@ def compute_distance_chain_ligand(pdb, protein_chains, ligands):
         l = []
         for nchain in range(len(protein_chains)):
             pairs = list(itertools.product(protein_chains[nchain], ligands[nlig]))
-            d = md.compute_distances(pdb, pairs)
-            l.append(d)
+            l.append(md.compute_distances(pdb, pairs))
         distances[nlig] = l
         
     return distances
