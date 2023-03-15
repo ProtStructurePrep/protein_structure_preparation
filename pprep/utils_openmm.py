@@ -99,10 +99,8 @@ def generate_forcefield(
     return forcefield
     
 def protein_ligand_simulation(modeller, ligand_mol):
-	"""
-	https://github.com/tdudgeon/simple-simulate-complex
-	
-	
+    """	
+    https://github.com/tdudgeon/simple-simulate-complex
 	"""
     # Prepare the system
     print('Preparing system')

@@ -1,0 +1,36 @@
+REMARK   1 CREATED WITH MDTraj 1.9.7, 2023-03-14
+CRYST1   70.999   93.700   95.301  90.00  90.00  90.00 P 1           1 
+MODEL        0
+ATOM   4644  N   MHU A   5     -22.594  17.205 -20.402  1.00  0.00           N  
+ATOM   4645  CA  MHU A   5     -21.579  17.103 -21.496  1.00  0.00           C  
+ATOM   4646  C   MHU A   5     -21.970  16.013 -22.488  1.00  0.00           C  
+ATOM   4647  O   MHU A   5     -22.074  14.870 -22.050  1.00  0.00           O  
+ATOM   4648  CB  MHU A   5     -20.125  16.936 -21.004  1.00  0.00           C  
+ATOM   4649  CG  MHU A   5     -19.078  16.998 -22.085  1.00  0.00           C  
+ATOM   4650  CD1 MHU A   5     -18.775  18.163 -22.705  1.00  0.00           C  
+ATOM   4651  CE1 MHU A   5     -17.805  18.254 -23.718  1.00  0.00           C  
+ATOM   4652  CZ  MHU A   5     -17.099  17.117 -24.125  1.00  0.00           C  
+ATOM   4653  CE2 MHU A   5     -17.414  15.939 -23.480  1.00  0.00           C  
+ATOM   4654  CD2 MHU A   5     -18.370  15.881 -22.494  1.00  0.00           C  
+ATOM   4655  NZ  MHU A   5     -16.114  17.199 -25.147  1.00  0.00           N  
+ATOM   4656  CZ1 MHU A   5     -15.821  18.408 -25.778  1.00  0.00           C  
+ATOM   4657  CZ2 MHU A   5     -15.392  16.023 -25.555  1.00  0.00           C  
+ATOM   4658  CM  MHU A   5     -22.287  16.661 -19.059  1.00  0.00           C  
+TER    4659      MHU A   5
+ENDMDL
+CONECT    1    2   15
+CONECT    2    1    3    5
+CONECT    3    2    4
+CONECT    4    3
+CONECT    5    2    6
+CONECT    6    5    7   11
+CONECT    7    6    8
+CONECT    8    7    9
+CONECT    9    8   10   12
+CONECT   10    9   11
+CONECT   11    6   10
+CONECT   12    9   13   14
+CONECT   13   12
+CONECT   14   12
+CONECT   15    1
+END

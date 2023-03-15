@@ -1,0 +1,24 @@
+REMARK   1 CREATED WITH MDTraj 1.9.7, 2023-03-14
+CRYST1   70.999   93.700   95.301  90.00  90.00  90.00 P 1           1 
+MODEL        0
+ATOM   4659  N   MHV A   6     -22.205  16.263 -23.810  1.00  0.00           N  
+ATOM   4660  CA  MHV A   6     -22.139  17.548 -24.544  1.00  0.00           C  
+ATOM   4661  C   MHV A   6     -23.427  17.803 -25.338  1.00  0.00           C  
+ATOM   4662  O   MHV A   6     -23.470  17.748 -26.559  1.00  0.00           O  
+ATOM   4663  CB  MHV A   6     -20.918  17.457 -25.464  1.00  0.00           C  
+ATOM   4664  CG  MHV A   6     -20.938  16.227 -26.338  1.00  0.00           C  
+ATOM   4665  OD1 MHV A   6     -20.182  16.167 -27.294  1.00  0.00           O  
+ATOM   4666  CD2 MHV A   6     -21.887  15.128 -26.037  1.00  0.00           C  
+ATOM   4667  CE  MHV A   6     -22.557  15.117 -24.654  1.00  0.00           C  
+TER    4668      MHV A   6
+ENDMDL
+CONECT    1    2    9
+CONECT    2    1    3    5
+CONECT    3    2    4
+CONECT    4    3
+CONECT    5    2    6
+CONECT    6    5    7    8
+CONECT    7    6
+CONECT    8    6    9
+CONECT    9    1    8
+END

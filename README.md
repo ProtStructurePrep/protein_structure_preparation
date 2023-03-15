@@ -1,5 +1,9 @@
 [Installation](#installation) |  [Requirements](#requirements) | [Contributin](#contributing) |  [Acknowledgment](#acknowledgment)
 
+OptimMDs (Optimization of Molecular Dynamics Simulations)
+=================
+
+
 Protein-Ligand Complex MD simulations
 =================
 The aim of this repository is to facilitate and automatize the MD simulations procedure. The project can be divided into two major blocks. The first one contains the basic steps for parsing proteins and selecting its ligands. Also, in this first block you can find the steps for preparing the protein and ligand structures, by fixing errors in their respective PDB files. In the second block you can find the steps for simulating the protein and the protein-ligand complex.

@@ -1,0 +1,24 @@
+REMARK   1 CREATED WITH MDTraj 1.9.7, 2023-03-14
+CRYST1   70.999   93.700   95.301  90.00  90.00  90.00 P 1           1 
+MODEL        0
+ATOM   4551  N   MHW A   1      14.279  12.521 -23.328  1.00  0.00           N  
+ATOM   4552  CA  MHW A   1      13.763  11.331 -23.712  1.00  0.00           C  
+ATOM   4553  C   MHW A   1      12.276  11.198 -23.820  1.00  0.00           C  
+ATOM   4554  O   MHW A   1      11.774  10.119 -24.170  1.00  0.00           O  
+ATOM   4555  CB  MHW A   1      14.580  10.229 -24.008  1.00  0.00           C  
+ATOM   4556  OG1 MHW A   1      14.057   9.061 -24.388  1.00  0.00           O  
+ATOM   4557  CG2 MHW A   1      15.964  10.361 -23.898  1.00  0.00           C  
+ATOM   4558  CD  MHW A   1      16.450  11.558 -23.513  1.00  0.00           C  
+ATOM   4559  CE  MHW A   1      15.592  12.604 -23.242  1.00  0.00           C  
+TER    4560      MHW A   1
+ENDMDL
+CONECT    1    2    9
+CONECT    2    1    3    5
+CONECT    3    2    4
+CONECT    4    3
+CONECT    5    2    6    7
+CONECT    6    5
+CONECT    7    5    8
+CONECT    8    7    9
+CONECT    9    1    8
+END
