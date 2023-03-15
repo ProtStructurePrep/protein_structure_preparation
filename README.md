@@ -1,6 +1,6 @@
 [Installation](#installation) |  [Requirements](#requirements) | [Contributin](#contributing) |  [Acknowledgment](#acknowledgment)
 
-OptimMDs (Optimization of Molecular Dynamics Simulations)
+OptimMDs 
 =================
 
 
