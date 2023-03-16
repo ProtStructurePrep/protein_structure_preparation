@@ -1,4 +1,4 @@
-[Installation](#installation) |  [Requirements](#requirements) | [Contributin](#contributing) |  [Acknowledgment](#acknowledgment)
+[Installation](#installation) |  [Requirements](#requirements) | [Contributing](#contributing) |  [Acknowledgment](#acknowledgment)
 
 OptimMDs 
 =================
