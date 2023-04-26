@@ -175,12 +175,12 @@ def common_residues(data, n=100):
     Parameters
     ----------
     data: .tdd file
-		it contains the residues id in the first column and the proteins 
-		in wich it appears in the second column
-	n: integer
-		threshold to consider a residue as a common residue. The default value is
-		n = 100, meaning that if a residue appears in more than 100 proteins,
-		this residue will be considered a common residue.
+        it contains the residues id in the first column and the proteins 
+        in wich it appears in the second column
+    n: integer
+        threshold to consider a residue as a common residue. The default value is
+        n = 100, meaning that if a residue appears in more than 100 proteins,
+        this residue will be considered a common residue.
 		
     Returns
     ----------
@@ -270,9 +270,9 @@ def select_protein_chains(pdb):
             
     return protein_chains
 
-def select_ligands(pdb):
+def select_ligands_name(pdb):
     """
-    Get the ligand names and the atomic indices of the ligands.
+    Get the ligand names.
     
     Parameters
     ----------
@@ -281,19 +281,38 @@ def select_ligands(pdb):
     
     Returns
     ----------
-    Two lists. `ligand_names`, containing the names of the ligands
-    and  `ligand_idx`, containig an array of the ligand atomic indices for each ligand.
+    List. `ligand_names`, containing the names of the ligands
     """
     ligand_names = []
-    ligand_idx = []
     
     for res in pdb.top.residues: 
         if not res.is_protein and not res.is_water:
             if res.name not in COMMON_LIGANDS:
                 ligand_names.append(res.name)
+    
+    return ligand_names
+    
+def select_ligands(pdb):
+    """
+    Get the atomic indices of the ligands.
+    
+    Parameters
+    ----------
+    pdb: mdtraj object
+        it is the object that load_pdb() returns
+    
+    Returns
+    ----------
+    List. `ligand_idx`, containig an array of the ligand atomic indices for each ligand.
+    """
+    ligand_idx = []
+    
+    for res in pdb.top.residues: 
+        if not res.is_protein and not res.is_water:
+            if res.name not in COMMON_LIGANDS:
                 ligand_idx.append(pdb.top.select(f"resid {res.index}"))
     
-    return ligand_names, ligand_idx
+    return ligand_idx
 
 def compute_distance_chain_ligand(pdb, protein_chains, ligands):
     """

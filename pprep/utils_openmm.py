@@ -101,7 +101,7 @@ def generate_forcefield(
 def protein_ligand_simulation(modeller, ligand_mol):
     """	
     https://github.com/tdudgeon/simple-simulate-complex
-	"""
+    """
     # Prepare the system
     print('Preparing system')
     forcefield_kwargs = { 'constraints': app.HBonds, 'rigidWater': True, 'removeCMMotion': False, 'hydrogenMass': 4*unit.amu }
