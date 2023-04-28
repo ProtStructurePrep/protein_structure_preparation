@@ -176,7 +176,7 @@ def load_pdb(pdb_name):
 
     Returns
     ----------
-    Mdtraj object.
+    MDAnalysis object.
 
     Example: load_pdb('/home/username/1.pdb')
     """
@@ -204,25 +204,26 @@ def find_potential_ligand(u):
 
     return u, potential_ligand
 
-def select_ligand(u, ligand_name):
+def select_ligand(u, ligand_name, output_file_name):
     """Select the ligand to simulate and save it in a pdb file"""
     lig = u.atoms.select_atoms(f'resname {ligand_name}')
-    lig.write(f'ligand_{ligand_name}.pdb')
-
+    lig.write(output_file_name)
+    
     return lig
 
 def display_chains(u):
     chains = list(set(u.segments.segids.tolist()))
     return chains
 
-def select_protein(u, chainid=None): # leave_cristalographic_waters=False
+def select_protein(u, output_file_name, chainid=None): # leave_cristalographic_waters=False
     """Select the receptor to simulate and save it in a pdb file"""
-    u = u.atoms.select_atoms("protein")
+    receptor = u.atoms.select_atoms("protein")
     if not chainid:
-        return u
+        receptor.write(output_file_name)
+        return receptor
     else:
         sep = ' and segid '
         string = 'segid ' + sep.join(chainid)
-        u = u.atoms.select_atoms(string)
-        return u
-
+        receptor = receptor.atoms.select_atoms(string)
+        receptor.write(output_file_name)
+        return receptor
