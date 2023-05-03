@@ -13,7 +13,6 @@ from openmm import unit
 import parmed
 import openmm
 from simtk.openmm.app import PDBReporter, DCDReporter, StateDataReporter
-import MDutils
 from pathlib import Path
 import sys, time
 
@@ -34,8 +33,64 @@ def load_prepared_receptor(receptor_file):
     """
     receptor = app.PDBFile(receptor_file)
     return receptor
+    
+def prepare_ligand(pdb_file, resname, smiles, depict=True):
+    """
+    Extracted from: https://projects.volkamerlab.org/teachopencadd/talktorials/T019_md_simulation.html
+    
+    Prepare a ligand from a PDB file via adding hydrogens and assigning bond orders. A depiction
+    of the ligand before and after preparation is rendered in 2D to allow an inspection of the
+    results. Huge thanks to @j-wags for the suggestion.
 
-def prepare_system(receptor, ligand):
+    Parameters
+    ----------
+    pdb_file: string
+       PDB file containing the ligand of interest.
+    resname: str
+        Three character residue name of the ligand.
+    smiles : str
+        SMILES string of the ligand informing about correct protonation and bond orders.
+    depict: bool, optional
+        show a 2D representation of the ligand
+
+    Returns
+    -------
+    prepared_ligand: rdkit.Chem.rdchem.Mol
+        Prepared ligand.
+    """
+    # split molecule
+    rdkit_mol = Chem.MolFromPDBFile(str(pdb_file))
+    rdkit_mol_split = Chem.rdmolops.SplitMolByPDBResidues(rdkit_mol)
+
+    # extract the ligand and remove any already present hydrogens
+    ligand = rdkit_mol_split[resname]
+    ligand = Chem.RemoveHs(ligand)
+
+    # assign bond orders from template
+    reference_mol = Chem.MolFromSmiles(smiles)
+    prepared_ligand = AllChem.AssignBondOrdersFromTemplate(reference_mol, ligand)
+    prepared_ligand.AddConformer(ligand.GetConformer(0))
+
+    # protonate ligand
+    prepared_ligand = Chem.rdmolops.AddHs(prepared_ligand, addCoords=True)
+    
+    # 2D depiction
+    if depict:
+        ligand_2d = copy.deepcopy(ligand)
+        prepared_ligand_2d = copy.deepcopy(prepared_ligand)
+        AllChem.Compute2DCoords(ligand_2d)
+        AllChem.Compute2DCoords(prepared_ligand_2d)
+        display(
+            Draw.MolsToGridImage(
+                [ligand_2d, prepared_ligand_2d], molsPerRow=2, legends=["original", "prepared"]
+            )
+        )
+        
+    
+    # return ligand
+    return prepared_ligand
+
+def prepare_system(receptor, ligand, solvate=False):
     """ 
     Function inpired from: https://github.com/cole-group/FEgrow/blob/master/fegrow/receptor.py
     
@@ -47,11 +102,7 @@ def prepare_system(receptor, ligand):
         Prepared protein (without the ligand) to simulate
     ligand: rdkit.Chem.rdchem.Mol
         Prepared ligand to simulate
-    forcefields: list
-        .xml forcefields files that can be found in the openmmforcefields package
-    water_model: str
-        .xml water model file that can be found in the openmmforcefields package
-        
+    
     Returns
     -------
     system: openmm.openmm.System
@@ -84,11 +135,17 @@ def prepare_system(receptor, ligand):
     )
 
     complex_structure = parmed_receptor + parmed_ligand
+    
+    
+    modeller = app.Modeller(complex_structure.topology, complex_structure.positions)
+    if solvate:
+        # Solvate
+        modeller.addSolvent(system_generator.forcefield, model='tip3p', padding=5.0*unit.angstroms, ionicStrength=0.15*unit.molar)
+        system = system_generator.create_system(modeller.topology)
+    else:
+        system = system_generator.create_system(modeller.topology)
 
-    # build the complex system
-    system = system_generator.create_system(complex_structure.topology)
-
-    return system, complex_structure
+    return system, modeller
     
 def setup_openmm_simulation(system, complex_structure, time_step=1*unit.femtoseconds, temperature=300*unit.kelvin, friction=1/unit.picosecond, platform_name="CPU"):
     """
@@ -178,7 +235,7 @@ def run_simulation(simulation, num_steps, reporting_interval, output_traj_pdb, o
     # all parts of the simulation end up in the same periodic box when being output.
     simulation.reporters.append(PDBReporter(output_traj_pdb, reporting_interval, enforcePeriodicBox=False))
     simulation.reporters.append(DCDReporter(output_traj_dcd, reporting_interval, enforcePeriodicBox=False))
-    simulation.reporters.append(StateDataReporter(sys.stdout, reporting_interval * 5, step=True, potentialEnergy=True, temperature=True))
+    simulation.reporters.append(StateDataReporter(sys.stdout, reporting_interval, step=True, potentialEnergy=True, temperature=True))
     print('Starting simulation with', num_steps, 'steps.')
     t0 = time.time()
     simulation.step(num_steps)
