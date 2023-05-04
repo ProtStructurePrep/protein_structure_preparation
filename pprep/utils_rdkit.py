@@ -4,7 +4,7 @@ from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
 
 
-def prepare_ligand(pdb_file, resname, smiles, depict=True):
+def prepare_ligand(pdb_file, resname, smiles, depict=False):
     """
     Extracted from: https://projects.volkamerlab.org/teachopencadd/talktorials/T019_md_simulation.html
     

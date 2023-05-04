@@ -166,8 +166,7 @@ ZN
 
 
 def load_pdb(pdb_name):
-    """
-    Parse a pdb file/fetch a structure from the PDB.
+    """sParse a pdb file/fetch a structure from the PDB.
 
     Parameters
     ----------
@@ -189,12 +188,31 @@ def load_pdb(pdb_name):
 
 
 def show_nv(u):
-    """Show MDAnalysis object"""
+    """Show MDAnalysis object
+    
+    Parameters
+    ----------
+    u: MDAnalysis.core.universe.Universe
+        MDAnalysis object to show
+    """
     view = nv.show_mdanalysis(u)
     return view
 
 def find_potential_ligand(u):
-    """Find the name of the potential ligand and remove ions and residues from the complex and f"""
+    """Find the name of the potential ligand and remove ions and residues from the complex and f
+    
+    Parameters
+    ----------
+    u: MDAnalysis.core.universe.Universe
+        Protein-ligand complex object
+        
+    Returns
+    ----------
+    u: MDAnalysis.core.universe.Universe
+        Protein-ligand complex object without any unwanted molecule
+    potential_ligand: str
+        Name of the potential ligand of the protein-ligand complex
+    """
     not_protein = set(u.atoms.select_atoms("not protein and not resname HOH").residues.resnames.tolist())
     for res in not_protein:
         if res in COMMON_RESIDUES:
@@ -212,6 +230,7 @@ def select_ligand(u, ligand_name, output_file_name):
     return lig
 
 def display_chains(u):
+    """Display the chain ids of the complex chains"""
     chains = list(set(u.segments.segids.tolist()))
     return chains
 

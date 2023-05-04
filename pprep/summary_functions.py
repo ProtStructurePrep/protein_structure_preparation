@@ -19,10 +19,10 @@ def parse_complex(pdb_name, output_ligand, output_prot):
     return ligand, protein
 
 def fix_complex(pdb_file, resname, smiles, protein_pdb, output_prepared_prot):
-	"""Fix the ligand and the protein for further simulations """
-	rdkit_ligand = urk.prepare_ligand(pdb_file, resname, smiles)
-	pdbfix_prot = updbfix.prepare_protein(protein_pdb, output_prepared_prot)
-	return rdkit_ligand, pdbfix_prot
+    """Fix the ligand and the protein for further simulations """
+    rdkit_ligand = urk.prepare_ligand(pdb_file, resname, smiles)
+    pdbfix_prot = updbfix.prepare_protein(protein_pdb, output_prepared_prot)
+    return rdkit_ligand, pdbfix_prot
 	
 def simulate_complex(rdkit_ligand, receptor_file, 
                      equilibration_steps, num_steps, reporting_interval,
