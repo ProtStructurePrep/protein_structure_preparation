@@ -199,7 +199,7 @@ def show_nv(u):
     return view
 
 def find_potential_ligand(u):
-    """Find the name of the potential ligand and remove ions and residues from the complex and f
+    """Find the name of the potential ligand and remove ions and residues from the complex
     
     Parameters
     ----------
