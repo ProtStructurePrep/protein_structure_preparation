@@ -223,19 +223,60 @@ def find_potential_ligand(u):
     return u, potential_ligand
 
 def select_ligand(u, ligand_name, output_file_name):
-    """Select the ligand to simulate and save it in a pdb file"""
+    """Select the ligand to simulate and save it in a pdb file
+    
+    Parameters
+    ----------
+    u: MDAnalysis.core.universe.Universe
+        Protein-ligand complex object
+    ligand_name: string
+        Name of the ligand to simulate
+    output_file_name: string
+        Name of the output file pdb where the ligand structure will be stored
+        
+    Returns
+    ----------
+    lig: MDAnalysis.core.universe.Universe
+        Ligand object
+    """
     lig = u.atoms.select_atoms(f'resname {ligand_name}')
     lig.write(output_file_name)
     
     return lig
 
 def display_chains(u):
-    """Display the chain ids of the complex chains"""
+    """Display the chain ids of the complex chains
+    
+    Parameters
+    ----------
+    u: MDAnalysis.core.universe.Universe
+        Protein-ligand complex object
+        
+    Returns
+    ----------
+    chains: list
+        List of all the chains present in the protein-ligand complex
+    """
     chains = list(set(u.segments.segids.tolist()))
     return chains
 
 def select_protein(u, output_file_name, chainid=None): # leave_cristalographic_waters=False
-    """Select the receptor to simulate and save it in a pdb file"""
+    """Select the receptor to simulate and save it in a pdb file
+    
+    Parameters
+    ----------
+    u: MDAnalysis.core.universe.Universe
+        Protein-ligand complex object
+    output_file_name: string
+        Name of the output file pdb where the ligand structure will be stored
+    chainid: list (default : None)
+        List containing the chains of the protein-ligand complex that you want to simulate
+           
+    Returns
+    ----------
+    receptor: MDAnalysis.core.universe.Universe
+        Receptor object
+    """
     receptor = u.atoms.select_atoms("protein")
     if not chainid:
         receptor.write(output_file_name)
