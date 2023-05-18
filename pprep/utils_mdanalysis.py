@@ -219,8 +219,8 @@ def find_potential_ligand(u):
             u = u.atoms.select_atoms(f'not resname {res}')
         else:
             potential_ligand = res
-
-    return u, potential_ligand
+            return u, potential_ligand
+    return u, None
 
 def select_ligand(u, ligand_name, output_file_name):
     """Select the ligand to simulate and save it in a pdb file
@@ -260,7 +260,7 @@ def display_chains(u):
     chains = list(set(u.segments.segids.tolist()))
     return chains
 
-def select_protein(u, output_file_name, chainid=None): # leave_cristalographic_waters=False
+def select_protein(u, output_file_name, leave_cristalographic_waters=False, chainid=None):
     """Select the receptor to simulate and save it in a pdb file
     
     Parameters
@@ -277,7 +277,11 @@ def select_protein(u, output_file_name, chainid=None): # leave_cristalographic_w
     receptor: MDAnalysis.core.universe.Universe
         Receptor object
     """
-    receptor = u.atoms.select_atoms("protein")
+    if leave_cristalographic_waters:
+        receptor = u.atoms.select_atoms("protein or resname HOH")
+    else:
+        receptor = u.atoms.select_atoms("protein")
+        
     if not chainid:
         receptor.write(output_file_name)
         return receptor
