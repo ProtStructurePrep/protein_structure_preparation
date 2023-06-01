@@ -33,6 +33,23 @@ def load_prepared_receptor(receptor_file):
     """
     receptor = app.PDBFile(receptor_file)
     return receptor
+    
+def load_prepared_ligand(rdkit_ligand):
+    """
+    Load the file of the corrected receptor by using OpenMM.
+    
+    Parameters
+    ----------
+    receptor_file: str
+        path of the file of the fixed receptor
+    
+    Returns
+    -------
+    receptor: openmm.app.pdbfile.PDBFile
+        OpenMM object containing the receptor file
+    """
+    ligand = OFFMolecule.from_rdkit(rdkit_ligand, allow_undefined_stereo=True)
+    return ligand
 
 def prepare_system(receptor, ligand, solvate=False):
     """ 
@@ -51,8 +68,12 @@ def prepare_system(receptor, ligand, solvate=False):
     -------
     system: openmm.openmm.System
         Prepared complex system for further simulations
-    parmed_structure: parmed.structure.Structure
+    modeller: openmm.app.modeller.Modeller
         Topology structure of the complex (with both the receptor and the ligand)
+        (with solvernt if solvate = True)
+    parmed_structure: parmed.structure.Structure
+        Topology structure of the complex (with both the receptor and the ligand) 
+        (without solvent)
     """
     
     
