@@ -166,7 +166,7 @@ ZN
 
 
 def load_pdb(pdb_name):
-    """sParse a pdb file/fetch a structure from the PDB.
+    """Parse a pdb file/fetch a structure from the PDB.
 
     Parameters
     ----------
