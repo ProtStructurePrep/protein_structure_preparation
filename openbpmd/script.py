@@ -1,12 +1,17 @@
 import pprep.utils_rdkit as urk
 import pprep.MDutils as umd
+import sys
 
 # OpenMM
-from simtk.openmm.app import Modeller, PDBFile, Simulation,  PDBReporter, StateDataReporter, DCDReporter
-from simtk.openmm import Platform, LangevinIntegrator, app, HarmonicBondForce, NonbondedForce
-from simtk import unit, openmm
+import openmm
+from openmm.app import Modeller, PDBFile, Simulation,  PDBReporter, StateDataReporter, DCDReporter
+from openmm import Platform, LangevinIntegrator, app, HarmonicBondForce, NonbondedForce
+from simtk import unit
 from openmmforcefields.generators import SystemGenerator
 from openmm.app.metadynamics import BiasVariable, Metadynamics
+from openff.units.openmm import to_openmm
+
+from openmm.openmm import XmlSerializer
 
 # Others
 import os
@@ -40,6 +45,8 @@ receptor = umd.load_prepared_receptor('prepared_receptor.pdb')
 
 modeller = Modeller(receptor.topology, receptor.positions)
 modeller.add(ligand.to_topology().to_openmm(), ligand.conformers[0])
+#modeller.add(ligand.to_topology().to_openmm(), to_openmm(ligand.conformers[0]))
+
 
 forcefield_kwargs = {'constraints': app.HBonds, 'rigidWater': True, 'removeCMMotion': False, 'hydrogenMass': 4*unit.amu }
 system_generator = SystemGenerator(
@@ -53,3 +60,6 @@ with open('solvated_complex.pdb', 'w') as outfile:
     PDBFile.writeFile(modeller.topology, modeller.positions, outfile)
 
 system = system_generator.create_system(modeller.topology, molecules=ligand)   
+
+with open('solvated_complex.xml', 'w') as output:
+    output.write(XmlSerializer.serialize(system))
