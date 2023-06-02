@@ -114,7 +114,7 @@ def minimize(parm, input_positions, system, platform, out_dir, min_file_name):
     
 if not os.path.isdir('Outputs'):
     os.mkdir('Outputs')
-    
+print("Minimizing...")    
 minimize(modeller, modeller.positions, system, platform, 'Outputs/', 'minimized.pdb')
 
 """Equilibrate"""
@@ -200,6 +200,9 @@ def equilibrate(min_pdb, parm, system, platform, out_dir, eq_file_name):
                       open(out_file, 'w'))
 
     return None
+
+print('Equilibrating...')
+equilibrate('Outputs/minimized.pdb', modeller, system, platform, 'Outputs/', 'equilibrated.pdb')
 
 """Center"""
 mdtraj_topology = md.Topology.from_openmm(modeller.topology)
@@ -345,6 +348,7 @@ rep_dir = os.path.join('Outputs','rep_0')
 if not os.path.isdir(rep_dir):
     os.mkdir(rep_dir)
 
+print('Producing...')
 produce('Outputs/', 0, 'MOL', 'Outputs/equilibrated.pdb', modeller, mdtraj_topology, 0.3, platform)
 
 """Pose score"""
@@ -381,6 +385,7 @@ def get_pose_score(structure_file, trajectory_file):
     
 trj_name = os.path.join(rep_dir,'trj.dcd')
 
+print('PoseScore...')
 PoseScoreArr = get_pose_score('Outputs/equilibrated.pdb', trj_name)
 
 """Contact score"""
@@ -430,6 +435,7 @@ def get_contact_score(structure_file, trajectory_file, lig_resname):
 
     return contact_scores
 
+print('Contact score...')
 ContactScoreArr = get_contact_score('Outputs/cent_equilibrated.pdb', trj_name, lig_resname)
 
 """Comp score"""
@@ -448,6 +454,7 @@ df = pd.DataFrame(Scores, columns=['CompScore', 'PoseScore',
 df.to_csv(os.path.join(rep_dir,'bpm_results.csv'), index=False)
 
 """OpenBPMD loop"""
+print('Starting OpenBPMD loop')
 nreps = 10
 # Run NREPS number of production simulations (nrep=0 has already been finished above)
 for idx in range(1, nreps):
@@ -528,4 +535,5 @@ def collect_results(in_dir, out_dir):
     results_df = results_df.round(3)
     results_df.to_csv(os.path.join(out_dir,'results.csv'), index=False)
     
+print('collect results')
 collect_results('Outputs', 'Outputs')
