@@ -16,9 +16,11 @@ from openmm.openmm import XmlSerializer
 # Others
 import os
 import MDAnalysis as mda
+from MDAnalysis.analysis import rms
 import mdtraj as md
 import numpy as np
 import pandas as pd
+
 
 speed = 0
 for i in range(Platform.getNumPlatforms()):
@@ -40,9 +42,9 @@ else:
     print('xml file does not exist')
     """RDKit prepared ligand --> OpenMM ligand"""
     pdb_file = 'ligand.pdb'
-    resname = '03P'
+    lig_resname = '03P'
     smiles = 'O=C(CC(O)(C)C)NCCn1ccc2c1c(ncn2)Nc1ccc(c(c1)Cl)Oc1cccc(c1)C(F)(F)F'
-    rdkit_ligand = urk.prepare_ligand(pdb_file, resname, smiles)
+    rdkit_ligand = urk.prepare_ligand(pdb_file, lig_resname, smiles)
 
     ligand = umd.load_prepared_ligand(rdkit_ligand)
 
