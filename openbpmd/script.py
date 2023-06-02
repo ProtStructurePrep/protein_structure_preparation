@@ -33,11 +33,11 @@ if platform.getName() == 'CUDA' or platform.getName() == 'OpenCL':
     print('Set precision for platform', platform.getName(), 'to mixed')
     
 if os.path.isfile('solvated_complex.xml'):
-    print('hola')
+    print('xml file exists')
     with open('solvated_complex.xml') as input:
         system = XmlSerializer.deserialize(input.read())
 else:
-    print('adios')
+    print('xml file does not exist')
     """RDKit prepared ligand --> OpenMM ligand"""
     pdb_file = 'ligand.pdb'
     resname = '03P'
