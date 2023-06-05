@@ -16,11 +16,15 @@ from openmm.openmm import XmlSerializer
 # Others
 import os
 import MDAnalysis as mda
-from MDAnalysis.analysis import rms
+from MDAnalysis.analysis import rms, contacts
 import mdtraj as md
 import numpy as np
 import pandas as pd
+import parmed as pmd
+import argparse
 
+import glob
+import os
 
 speed = 0
 for i in range(Platform.getNumPlatforms()):
@@ -67,7 +71,8 @@ else:
     with open('solvated_complex.pdb', 'w') as outfile:
         PDBFile.writeFile(modeller.topology, modeller.positions, outfile)
 
-    system = system_generator.create_system(modeller.topology, molecules=ligand)
+    topology = modeller.topology
+    system = system_generator.create_system(topology, molecules=ligand)
 
     with open('solvated_complex.xml', 'w') as output:
         output.write(XmlSerializer.serialize(system))
@@ -460,13 +465,14 @@ print('Starting OpenBPMD loop')
 nreps = 10
 # Run NREPS number of production simulations (nrep=0 has already been finished above)
 for idx in range(1, nreps):
-    rep_dir = os.path.join(args.output,f'rep_{idx}')
+    rep_dir = f'rep_{idx}'
     if not os.path.isdir(rep_dir):
         os.mkdir(rep_dir)
 
     if os.path.isfile(os.path.join(rep_dir,'bpm_results.csv')):
         continue
-        
+
+    sys.exit()
     produce('Outputs/', idx, 'MOL', 'Outputs/equilibrated.pdb', modeller, mdtraj_topology, 0.3, platform)
                 
     trj_name = os.path.join(rep_dir,'trj.dcd')

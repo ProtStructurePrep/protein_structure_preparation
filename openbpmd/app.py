@@ -2,6 +2,8 @@ import pprep.utils_rdkit as urk
 import pprep.MDutils as umd
 import sys
 from pathlib import Path
+import json
+from copy import deepcopy
 
 # OpenMM
 import openmm
@@ -11,6 +13,7 @@ from simtk import unit
 from openmmforcefields.generators import SystemGenerator
 from openmm.app.metadynamics import BiasVariable, Metadynamics
 from openff.units.openmm import to_openmm
+from openff.toolkit.topology import Molecule as OFFMolecule
 
 from openmm.openmm import XmlSerializer
 
@@ -33,7 +36,27 @@ logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 
 OUTPUT_DIR = Path('Outputs')
-NREPS = 1
+NREPS = 10
+DEFAULT_LIG_RESNAME = 'LIG'
+
+RECEPTOR_PDB_FILE = 'prepared_receptor.pdb'
+LIGAND_PDB_FILE = 'ligand.pdb'
+LIG_RESNAME = '03P'
+SMILES = 'O=C(CC(O)(C)C)NCCn1ccc2c1c(ncn2)Nc1ccc(c(c1)Cl)Oc1cccc(c1)C(F)(F)F'
+
+
+def _system_generator(ligand, restart=False):
+    if restart or not hasattr(_system_generator, 'generator'):
+        forcefield_kwargs = {
+            'constraints': app.HBonds, 'rigidWater': True,
+            'removeCMMotion': False, 'hydrogenMass': 4*unit.amu }
+        generator = SystemGenerator(
+            forcefields=['amber/ff14SB.xml', 'amber/tip3p_standard.xml'],
+            small_molecule_forcefield='gaff-2.11',
+            molecules=[ligand],
+            forcefield_kwargs=forcefield_kwargs)
+        _system_generator.generator = generator
+    return _system_generator.generator
 
 def _get_platform():
     """Get platform."""
@@ -51,32 +74,29 @@ def _get_platform():
     return platform
 
 
-def _setup_system():
+def _setup_system(receptor_pdb_file, ligand_pdb_file, smiles,
+                  lig_resname='LIG'):
     """Return topology, system."""
 
     "RDKit prepared ligand --> OpenMM ligand"
-    pdb_file = 'ligand.pdb'
-    lig_resname = '03P'
-    smiles = 'O=C(CC(O)(C)C)NCCn1ccc2c1c(ncn2)Nc1ccc(c(c1)Cl)Oc1cccc(c1)C(F)(F)F'
-    rdkit_ligand = urk.prepare_ligand(pdb_file, lig_resname, smiles)
+    rdkit_ligand = urk.prepare_ligand(ligand_pdb_file, lig_resname, smiles)
     
     ligand = umd.load_prepared_ligand(rdkit_ligand)
+    ligand.name = DEFAULT_LIG_RESNAME
 
     "OpenMM receptor"
-    receptor = umd.load_prepared_receptor('prepared_receptor.pdb')
+    receptor = umd.load_prepared_receptor(receptor_pdb_file)
 
     modeller = Modeller(receptor.topology, receptor.positions)
     modeller.add(ligand.to_topology().to_openmm(), ligand.conformers[0])
     #modeller.add(ligand.to_topology().to_openmm(), to_openmm(ligand.conformers[0]))
-
-
-    forcefield_kwargs = {'constraints': app.HBonds, 'rigidWater': True, 'removeCMMotion': False, 'hydrogenMass': 4*unit.amu }
-    system_generator = SystemGenerator(
-        forcefields=['amber/ff14SB.xml', 'amber/tip3p_standard.xml'],
-        small_molecule_forcefield='gaff-2.11',
-        molecules=[ligand],
-        forcefield_kwargs=forcefield_kwargs)
+    
+    system_generator = _system_generator(ligand)
     modeller.addSolvent(system_generator.forcefield, model='tip3p', padding=10.0*unit.angstroms)
+
+
+    with open('off_ligand.json', 'w') as fp:
+        print(ligand.to_json(), file=fp)
 
     with open('solvated_complex.pdb', 'w') as outfile:
         PDBFile.writeFile(modeller.topology, modeller.positions, outfile)
@@ -86,7 +106,7 @@ def _setup_system():
 
     with open('solvated_complex.xml', 'w') as output:
         output.write(XmlSerializer.serialize(system))
-    return modeller, topology, system
+    return modeller, topology, system, receptor, ligand
 
 
 """Minimize"""
@@ -177,6 +197,7 @@ def equilibrate(min_pdb, parm, system, platform, out_dir, eq_file_name):
     
     # Add the harmonic restraints on the positions
     # of specified atoms
+    system = deepcopy(system)  # copy system before modifications
     restraint = HarmonicBondForce()
     restraint.setUsesPeriodicBoundaryConditions(True)
     system.addForce(restraint)
@@ -219,7 +240,8 @@ def equilibrate(min_pdb, parm, system, platform, out_dir, eq_file_name):
 
 
 """Produce"""
-def produce(out_dir, idx, lig_resname, eq_pdb, parm, mdtraj_top, set_hill_height, platform):
+def produce(out_dir, idx, eq_pdb, parm, mdtraj_top, set_hill_height, platform,
+            ligand, system, lig_resname='LIG'):
     """An OpenBPMD production simulation function. Ligand RMSD is biased with
     metadynamics. The integrator uses a 4 fs time step and
     runs for 10 ns, writing a frame every 100 ps.
@@ -250,7 +272,9 @@ def produce(out_dir, idx, lig_resname, eq_pdb, parm, mdtraj_top, set_hill_height
     """
     # the system needs to be created again, as the system has been modified when doing the equilibration
     # I figured this out opening a GitHub issue: https://github.com/openmm/openmm/issues/4091#issuecomment-1570916065
-    system = system_generator.create_system(modeller.topology, molecules=ligand)
+
+    #system_generator = _system_generator(ligand)
+    #system = system_generator.create_system(modeller.topology, molecules=ligand)
     
     # First, assign the replica directory to which we'll write the files
     write_dir = os.path.join(out_dir,f'rep_{idx}')
@@ -383,7 +407,7 @@ def get_pose_score(structure_file, trajectory_file):
     return pose_scores
 
 """Contact score"""
-def get_contact_score(structure_file, trajectory_file, lig_resname):
+def get_contact_score(structure_file, trajectory_file, lig_resname='LIG'):
     """A function the gets the ContactScore from an OpenBPMD trajectory.
 
     Parameters
@@ -478,16 +502,18 @@ def collect_results(in_dir, out_dir):
     results_df.to_csv(os.path.join(out_dir,'results.csv'), index=False)
 
 
-def run_replica(idx, cent_eq_pdb, lig_resname):
+def run_replica(idx, cent_eq_pdb, modeller, platform, ligand, system,
+                lig_resname='LIG'):
     """Run a replica simulation."""
-    rep_dir = f'rep_{idx}'
+    mdtraj_topology = md.Topology.from_openmm(modeller.topology)
+    rep_dir = os.path.join('Outputs', f'rep_{idx}')
     if not os.path.isdir(rep_dir):
         os.mkdir(rep_dir)
 
     if os.path.isfile(os.path.join(rep_dir,'bpm_results.csv')):
         return
         
-    produce('Outputs/', idx, 'MOL', 'Outputs/equilibrated.pdb', modeller, mdtraj_topology, 0.3, platform)
+    produce('Outputs/', idx, 'Outputs/equilibrated.pdb', modeller, mdtraj_topology, 0.3, platform, ligand, system)
                 
     trj_name = os.path.join(rep_dir,'trj.dcd')
                 
@@ -518,9 +544,18 @@ if os.path.isfile('solvated_complex.xml'):
         system = XmlSerializer.deserialize(input.read())
     modeller = PDBFile('solvated_complex.pdb')
     topology = modeller.topology
+    with open('off_ligand.json', 'r') as fp:
+        ligand = OFFMolecule.from_json(fp.read())    
 else:
     print('xml file does not exist')
-    modeller, topology, system = _setup_system()
+    modeller, topology, system, receptor, ligand = _setup_system(
+        RECEPTOR_PDB_FILE, LIGAND_PDB_FILE, SMILES,
+        lig_resname=LIG_RESNAME)
+
+
+
+# create output directory
+OUTPUT_DIR.mkdir(exist_ok=True)
 
 minimized_pdb = OUTPUT_DIR / 'minimized.pdb'
 if not minimized_pdb.is_file():
@@ -552,7 +587,7 @@ else:
 logger.info('Starting OpenBPMD loop')
 # Run NREPS number of production simulations (nrep=0 has already been finished above)
 for idx in range(0, NREPS):
-    run_replica(idx, cent_eq_pdb, lig_resname)
+    run_replica(idx, cent_eq_pdb, modeller, platform, ligand, system)
     
 logger.info('Collecting results')
 collect_results('Outputs', 'Outputs')
