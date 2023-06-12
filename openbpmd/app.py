@@ -1,6 +1,9 @@
 import pprep.utils_rdkit as urk
 import pprep.MDutils as umd
 import sys
+from pathlib import Path
+import json
+from copy import deepcopy
 
 # OpenMM
 import openmm
@@ -10,6 +13,7 @@ from simtk import unit
 from openmmforcefields.generators import SystemGenerator
 from openmm.app.metadynamics import BiasVariable, Metadynamics
 from openff.units.openmm import to_openmm
+from openff.toolkit.topology import Molecule as OFFMolecule
 
 from openmm.openmm import XmlSerializer
 
@@ -26,47 +30,73 @@ import argparse
 import glob
 import os
 
-speed = 0
-for i in range(Platform.getNumPlatforms()):
-    p = Platform.getPlatform(i)
-    # print(p.getName(), p.getSpeed())
-    if p.getSpeed() > speed:
-        platform = p
-        speed = p.getSpeed()
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
-if platform.getName() == 'CUDA' or platform.getName() == 'OpenCL':
-    platform.setPropertyDefaultValue('Precision', 'mixed')
-    print('Set precision for platform', platform.getName(), 'to mixed')
+
+OUTPUT_DIR = Path('Outputs')
+NREPS = 10
+DEFAULT_LIG_RESNAME = 'LIG'
+
+RECEPTOR_PDB_FILE = 'prepared_receptor.pdb'
+LIGAND_PDB_FILE = 'ligand.pdb'
+LIG_RESNAME = '03P'
+SMILES = 'O=C(CC(O)(C)C)NCCn1ccc2c1c(ncn2)Nc1ccc(c(c1)Cl)Oc1cccc(c1)C(F)(F)F'
+
+
+def _system_generator(ligand, restart=False):
+    if restart or not hasattr(_system_generator, 'generator'):
+        forcefield_kwargs = {
+            'constraints': app.HBonds, 'rigidWater': True,
+            'removeCMMotion': False, 'hydrogenMass': 4*unit.amu }
+        generator = SystemGenerator(
+            forcefields=['amber/ff14SB.xml', 'amber/tip3p_standard.xml'],
+            small_molecule_forcefield='gaff-2.11',
+            molecules=[ligand],
+            forcefield_kwargs=forcefield_kwargs)
+        _system_generator.generator = generator
+    return _system_generator.generator
+
+def _get_platform():
+    """Get platform."""
+    speed = 0
+    for i in range(Platform.getNumPlatforms()):
+        p = Platform.getPlatform(i)
+        # print(p.getName(), p.getSpeed())
+        if p.getSpeed() > speed:
+            platform = p
+            speed = p.getSpeed()
+            logger.info(f'Platform: {platform.getName()}, speed: {speed}')
+    if platform.getName() == 'CUDA' or platform.getName() == 'OpenCL':
+        platform.setPropertyDefaultValue('Precision', 'mixed')
+    logger.info(f'Set precision for platform {platform.getName()} to mixed')
+    return platform
+
+
+def _setup_system(receptor_pdb_file, ligand_pdb_file, smiles,
+                  lig_resname='LIG'):
+    """Return topology, system."""
+
+    "RDKit prepared ligand --> OpenMM ligand"
+    rdkit_ligand = urk.prepare_ligand(ligand_pdb_file, lig_resname, smiles)
     
-if os.path.isfile('solvated_complex.xml'):
-    print('xml file exists')
-    with open('solvated_complex.xml') as input:
-        system = XmlSerializer.deserialize(input.read())
-else:
-    print('xml file does not exist')
-    """RDKit prepared ligand --> OpenMM ligand"""
-    pdb_file = 'ligand.pdb'
-    lig_resname = '03P'
-    smiles = 'O=C(CC(O)(C)C)NCCn1ccc2c1c(ncn2)Nc1ccc(c(c1)Cl)Oc1cccc(c1)C(F)(F)F'
-    rdkit_ligand = urk.prepare_ligand(pdb_file, lig_resname, smiles)
-
     ligand = umd.load_prepared_ligand(rdkit_ligand)
+    ligand.name = DEFAULT_LIG_RESNAME
 
-    """OpenMM receptor"""
-    receptor = umd.load_prepared_receptor('prepared_receptor.pdb')
+    "OpenMM receptor"
+    receptor = umd.load_prepared_receptor(receptor_pdb_file)
 
     modeller = Modeller(receptor.topology, receptor.positions)
     modeller.add(ligand.to_topology().to_openmm(), ligand.conformers[0])
     #modeller.add(ligand.to_topology().to_openmm(), to_openmm(ligand.conformers[0]))
-
-
-    forcefield_kwargs = {'constraints': app.HBonds, 'rigidWater': True, 'removeCMMotion': False, 'hydrogenMass': 4*unit.amu }
-    system_generator = SystemGenerator(
-        forcefields=['amber/ff14SB.xml', 'amber/tip3p_standard.xml'],
-        small_molecule_forcefield='gaff-2.11',
-        molecules=[ligand],
-        forcefield_kwargs=forcefield_kwargs)
+    
+    system_generator = _system_generator(ligand)
     modeller.addSolvent(system_generator.forcefield, model='tip3p', padding=10.0*unit.angstroms)
+
+
+    with open('off_ligand.json', 'w') as fp:
+        print(ligand.to_json(), file=fp)
 
     with open('solvated_complex.pdb', 'w') as outfile:
         PDBFile.writeFile(modeller.topology, modeller.positions, outfile)
@@ -76,6 +106,8 @@ else:
 
     with open('solvated_complex.xml', 'w') as output:
         output.write(XmlSerializer.serialize(system))
+    return modeller, topology, system, receptor, ligand
+
 
 """Minimize"""
 def minimize(parm, input_positions, system, platform, out_dir, min_file_name):
@@ -118,11 +150,7 @@ def minimize(parm, input_positions, system, platform, out_dir, min_file_name):
                       open(out_file, 'w'))
 
     return None
-    
-if not os.path.isdir('Outputs'):
-    os.mkdir('Outputs')
-print("Minimizing...")    
-minimize(modeller, modeller.positions, system, platform, 'Outputs/', 'minimized.pdb')
+
 
 """Equilibrate"""
 def equilibrate(min_pdb, parm, system, platform, out_dir, eq_file_name):
@@ -145,6 +173,7 @@ def equilibrate(min_pdb, parm, system, platform, out_dir, eq_file_name):
     eq_file_name : str
         Name of the equilibrated PDB file to write.
     """
+    NSTEPS=250 # 500 fs
     # Get the solute heavy atom indices to use
     # for defining position restraints during equilibration
     universe = mda.Universe(min_pdb,
@@ -168,6 +197,7 @@ def equilibrate(min_pdb, parm, system, platform, out_dir, eq_file_name):
     
     # Add the harmonic restraints on the positions
     # of specified atoms
+    system = deepcopy(system)  # copy system before modifications
     restraint = HarmonicBondForce()
     restraint.setUsesPeriodicBoundaryConditions(True)
     system.addForce(restraint)
@@ -196,7 +226,7 @@ def equilibrate(min_pdb, parm, system, platform, out_dir, eq_file_name):
     sim = Simulation(parm.topology, system, integrator,
                      platform)
     sim.context.setPositions(input_positions)
-    integrator.step(250)  # run 500 ps of equilibration
+    integrator.step(NSTEPS)  # run 500 ps of equilibration
     all_positions = sim.context.getState(
         getPositions=True, enforcePeriodicBox=True).getPositions()
     # we don't want to write the dummy atoms, so we only
@@ -208,19 +238,10 @@ def equilibrate(min_pdb, parm, system, platform, out_dir, eq_file_name):
 
     return None
 
-print('Equilibrating...')
-equilibrate('Outputs/minimized.pdb', modeller, system, platform, 'Outputs/', 'equilibrated.pdb')
-
-"""Center"""
-mdtraj_topology = md.Topology.from_openmm(modeller.topology)
-mdu = md.load('Outputs/equilibrated.pdb', top=mdtraj_topology)
-mdu.image_molecules()
-mdu.save_pdb('Outputs/cent_equilibrated.pdb')
-
-cent_eq_pdb = 'Outputs/cent_equilibrated.pdb'
 
 """Produce"""
-def produce(out_dir, idx, lig_resname, eq_pdb, parm, mdtraj_top, set_hill_height, platform):
+def produce(out_dir, idx, eq_pdb, parm, mdtraj_top, set_hill_height, platform,
+            ligand, system, lig_resname='LIG'):
     """An OpenBPMD production simulation function. Ligand RMSD is biased with
     metadynamics. The integrator uses a 4 fs time step and
     runs for 10 ns, writing a frame every 100 ps.
@@ -251,7 +272,9 @@ def produce(out_dir, idx, lig_resname, eq_pdb, parm, mdtraj_top, set_hill_height
     """
     # the system needs to be created again, as the system has been modified when doing the equilibration
     # I figured this out opening a GitHub issue: https://github.com/openmm/openmm/issues/4091#issuecomment-1570916065
-    system = system_generator.create_system(modeller.topology, molecules=ligand)
+
+    #system_generator = _system_generator(ligand)
+    #system = system_generator.create_system(modeller.topology, molecules=ligand)
     
     # First, assign the replica directory to which we'll write the files
     write_dir = os.path.join(out_dir,f'rep_{idx}')
@@ -351,13 +374,6 @@ def produce(out_dir, idx, lig_resname, eq_pdb, parm, mdtraj_top, set_hill_height
 
     return None
     
-rep_dir = os.path.join('Outputs','rep_0')
-if not os.path.isdir(rep_dir):
-    os.mkdir(rep_dir)
-
-print('Producing...')
-produce('Outputs/', 0, 'MOL', 'Outputs/equilibrated.pdb', modeller, mdtraj_topology, 0.3, platform)
-
 """Pose score"""
 def get_pose_score(structure_file, trajectory_file):
     """A function the gets the PoseScore (ligand RMSD) from an OpenBPMD
@@ -389,14 +405,9 @@ def get_pose_score(structure_file, trajectory_file):
     pose_scores = r.rmsd[1:, -1]
 
     return pose_scores
-    
-trj_name = os.path.join(rep_dir,'trj.dcd')
-
-print('PoseScore...')
-PoseScoreArr = get_pose_score('Outputs/equilibrated.pdb', trj_name)
 
 """Contact score"""
-def get_contact_score(structure_file, trajectory_file, lig_resname):
+def get_contact_score(structure_file, trajectory_file, lig_resname='LIG'):
     """A function the gets the ContactScore from an OpenBPMD trajectory.
 
     Parameters
@@ -442,59 +453,6 @@ def get_contact_score(structure_file, trajectory_file, lig_resname):
 
     return contact_scores
 
-print('Contact score...')
-ContactScoreArr = get_contact_score('Outputs/cent_equilibrated.pdb', trj_name, lig_resname)
-
-"""Comp score"""
-# Calculate the CompScore at every frame
-CompScoreArr = np.zeros(99)
-for index in range(ContactScoreArr.shape[0]):
-    ContactScore, PoseScore = ContactScoreArr[index], PoseScoreArr[index]
-    CompScore = PoseScore - 5 * ContactScore
-    CompScoreArr[index] = CompScore
-
-Scores = np.stack((CompScoreArr, PoseScoreArr, ContactScoreArr), axis=-1)
-
-# Save a DataFrame to CSV
-df = pd.DataFrame(Scores, columns=['CompScore', 'PoseScore',
-                                           'ContactScore'])
-df.to_csv(os.path.join(rep_dir,'bpm_results.csv'), index=False)
-
-"""OpenBPMD loop"""
-print('Starting OpenBPMD loop')
-nreps = 10
-# Run NREPS number of production simulations (nrep=0 has already been finished above)
-for idx in range(1, nreps):
-    rep_dir = f'rep_{idx}'
-    if not os.path.isdir(rep_dir):
-        os.mkdir(rep_dir)
-
-    if os.path.isfile(os.path.join(rep_dir,'bpm_results.csv')):
-        continue
-
-    sys.exit()
-    produce('Outputs/', idx, 'MOL', 'Outputs/equilibrated.pdb', modeller, mdtraj_topology, 0.3, platform)
-                
-    trj_name = os.path.join(rep_dir,'trj.dcd')
-                
-    PoseScoreArr = get_pose_score(cent_eq_pdb, trj_name)
-
-    ContactScoreArr = get_contact_score(cent_eq_pdb, trj_name, lig_resname)
-    
-    # Calculate the CompScore at every frame
-    CompScoreArr = np.zeros(99)
-    for index in range(ContactScoreArr.shape[0]):
-        ContactScore, PoseScore = ContactScoreArr[index], PoseScoreArr[index]
-        CompScore = PoseScore - 5 * ContactScore
-        CompScoreArr[index] = CompScore
-
-    Scores = np.stack((CompScoreArr, PoseScoreArr, ContactScoreArr), axis=-1)
-
-    # Save a DataFrame to CSV
-    df = pd.DataFrame(Scores, columns=['CompScore', 'PoseScore',
-                                           'ContactScore'])
-    df.to_csv(os.path.join(rep_dir,'bpm_results.csv'), index=False)
-    
 """Collect results"""
 def collect_results(in_dir, out_dir):
     """A function that collects the time-resolved BPM results,
@@ -542,6 +500,94 @@ def collect_results(in_dir, out_dir):
     results_df = pd.DataFrame(data=d)
     results_df = results_df.round(3)
     results_df.to_csv(os.path.join(out_dir,'results.csv'), index=False)
+
+
+def run_replica(idx, cent_eq_pdb, modeller, platform, ligand, system,
+                lig_resname='LIG'):
+    """Run a replica simulation."""
+    mdtraj_topology = md.Topology.from_openmm(modeller.topology)
+    rep_dir = os.path.join('Outputs', f'rep_{idx}')
+    if not os.path.isdir(rep_dir):
+        os.mkdir(rep_dir)
+
+    if os.path.isfile(os.path.join(rep_dir,'bpm_results.csv')):
+        return
+        
+    produce('Outputs/', idx, 'Outputs/equilibrated.pdb', modeller, mdtraj_topology, 0.3, platform, ligand, system)
+                
+    trj_name = os.path.join(rep_dir,'trj.dcd')
+                
+    PoseScoreArr = get_pose_score(cent_eq_pdb, trj_name)
+
+    ContactScoreArr = get_contact_score(cent_eq_pdb, trj_name, lig_resname)
     
-print('collect results')
+    # Calculate the CompScore at every frame
+    CompScoreArr = np.zeros(99)
+    for index in range(ContactScoreArr.shape[0]):
+        ContactScore, PoseScore = ContactScoreArr[index], PoseScoreArr[index]
+        CompScore = PoseScore - 5 * ContactScore
+        CompScoreArr[index] = CompScore
+
+    Scores = np.stack((CompScoreArr, PoseScoreArr, ContactScoreArr), axis=-1)
+
+    # Save a DataFrame to CSV
+    df = pd.DataFrame(Scores, columns=['CompScore', 'PoseScore',
+                                           'ContactScore'])
+    df.to_csv(os.path.join(rep_dir,'bpm_results.csv'), index=False)
+
+
+platform = _get_platform()
+
+if os.path.isfile('solvated_complex.xml'):
+    logger.info('xml file exists')
+    with open('solvated_complex.xml') as input:
+        system = XmlSerializer.deserialize(input.read())
+    modeller = PDBFile('solvated_complex.pdb')
+    topology = modeller.topology
+    with open('off_ligand.json', 'r') as fp:
+        ligand = OFFMolecule.from_json(fp.read())    
+else:
+    print('xml file does not exist')
+    modeller, topology, system, receptor, ligand = _setup_system(
+        RECEPTOR_PDB_FILE, LIGAND_PDB_FILE, SMILES,
+        lig_resname=LIG_RESNAME)
+
+
+
+# create output directory
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+minimized_pdb = OUTPUT_DIR / 'minimized.pdb'
+if not minimized_pdb.is_file():
+    logger.info("Minimizing...")
+    minimize(modeller, modeller.positions, system, platform,
+             OUTPUT_DIR, minimized_pdb.name)
+else:
+    logger.info("Minimized structure exists")
+
+equilibrated_pdb = OUTPUT_DIR / 'equilibrated.pdb'
+if not equilibrated_pdb.is_file():
+    logger.info("Equilibrating...")
+    equilibrate(str(minimized_pdb), modeller, system, platform, OUTPUT_DIR,
+                equilibrated_pdb.name)
+else:
+    logger.info("Equilibrated structure exists")
+
+cent_eq_pdb = OUTPUT_DIR / 'cent_equilibrated.pdb'
+if not cent_eq_pdb.is_file():
+    logger.info("Centering")
+    mdtraj_topology = md.Topology.from_openmm(modeller.topology)
+    mdu = md.load(equilibrated_pdb, top=mdtraj_topology)
+    mdu.image_molecules()
+    mdu.save_pdb(cent_eq_pdb)
+else:
+    logger.info("Centered equilibrated structure exists")
+
+"""OpenBPMD loop"""
+logger.info('Starting OpenBPMD loop')
+# Run NREPS number of production simulations (nrep=0 has already been finished above)
+for idx in range(0, NREPS):
+    run_replica(idx, cent_eq_pdb, modeller, platform, ligand, system)
+    
+logger.info('Collecting results')
 collect_results('Outputs', 'Outputs')
