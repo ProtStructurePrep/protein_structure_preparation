@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """protein structure preparation"""
 __title__ = 'pprep'
-__version__ = '0.2'
+__version__ = '0.3'
 __author__ = 'Eva Martin, Simone Marsili'
 __summary__ = ''
 __url__ = ''
