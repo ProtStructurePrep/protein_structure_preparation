@@ -45,7 +45,7 @@ def load_prepared_ligand(rdkit_ligand):
     
     Returns
     -------
-    receptor: openmm.app.pdbfile.PDBFile
+    ligand: openff
         OpenMM object containing the receptor file
     """
     ligand = OFFMolecule.from_rdkit(rdkit_ligand, allow_undefined_stereo=True)
